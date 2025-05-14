@@ -1,7 +1,8 @@
 # BiomedSQL: BiomedSQL: A Text-to-SQL Benchmark for Scientific Reasoning on Biomedical Knowledge Bases 
 
-Overview of text-to-SQL workflow used to evaluate LLMs on BiomedSQL.
 ![Alt text](assets/text-to-sql-workflow.png)
+
+<p align="center"><em>Overview of text-to-SQL workflow used to evaluate LLMs on BiomedSQL.</em></p>
 
 ## Requirements
 
