@@ -6,7 +6,7 @@
 
 ## Requirements
 
-To install requirements, create a new environment with conda:
+To install requirements, we recommend creating a new environment with conda:
 ```setup
 conda env create -f environment.yml
 ```
