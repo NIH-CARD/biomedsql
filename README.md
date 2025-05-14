@@ -13,35 +13,57 @@ Or install via pip:
 pip install -r requirements.txt
 ```
 
->📋  Describe how to set up the environment, e.g. pip/conda/docker commands, download datasets, etc...
+## Environment Setup
 
-## Training
+BiomedSQL requires the extensive use of both opened a closed source LLMs. The following services are needed to run the full set of experiments:
 
-To train the model(s) in the paper, run this command:
+*AzureOpenAI (with endpoints for gpt-4o, gpt-4o-mini, and gpt-o3-mini)
+*AzureAI (with an endpoint for Meta-Llama-405B)
+*Gemini (for access to gemini-2.0-flash and gemini-2.0-flash-lite)
+*OpenAI (for access to the general completions() API for use in the Schema Indexing interaction paradigm)
+*Anthtropic (for access to claude-3-7-sonnet)
+*HuggingFace (for access to gated Meta-Llama repositories)
 
-```train
-python train.py --input-data <path_to_data> --alpha 10 --beta 20
+See ```config/sample.env``` for a complete list of specific information needed from each provider. Once complete, please move this file to ```config/.env``` for seamless use in the current experiment setup.
+
+## BigQuery Database Creation
+
+Coming soon we will provide code to create a fresh BigQuery Database from the parquet files available along with the BiomedSQL benchmark on HuggingFace.
+
+Reviewers will be provided with a pre-configured ```config/service_account.json``` file for access to the current database.
+
+## LLM Experiments
+
+To run the isolated SQL generation experiments for BiomedSQL, run:
+
+```isolated sql generation
+python run_llm_experiments.py
 ```
 
->📋  Describe how to train the models, with example commands on how to train the models in your paper, including the full training procedure and appropriate hyperparameters.
+Currently we use the following open-source models and detail the following compute requirements to run our experiment pipeline as-is:
+*meta-llama/Llama-3.1-70B-Instruct (three NVIDIA 80GB A100 GPUs)
+*Qwen/Qwen2.5-Coder-32B-Instruct (two NVIDIA 80GB A100 GPUs)
+*Qwen/Qwen2.5-Coder-14B-Instruct (two NVIDIA 80GB A100 GPUs)
 
-## Evaluation
+We understand that GPU access may differ from user to user, so in order to run our experiments without the need for GPUs, please comment out any models specified with ```provider: huggingface``` under the ```experiment_models``` section of ```config/llm_config.yaml```.
 
-To evaluate my model on ImageNet, run:
+## Interaction Paradigm Experiments
 
-```eval
-python eval.py --model-file mymodel.pth --benchmark imagenet
+To run the interaction paradigm experiments for BiomedSQL, run:
+
+```interaction paradigm
+python run_interaction_experiments.py
 ```
 
->📋  Describe how to evaluate the trained models on benchmarks reported in the paper, give commands that produce the results (section below).
+## Results
 
-## Pre-trained Models
+To generate results figures and tables after experiments finished, run:
 
-You can download pretrained models here:
+```results
+python results.py
+```
 
-- [My awesome model](https://drive.google.com/mymodel.pth) trained on ImageNet using parameters x,y,z. 
-
->📋  Give a link to where/how the pretrained models can be downloaded and how they were trained (if applicable).  Alternatively you can have an additional column in your results table with a link to the models.
+Tables will show up in ```results``` and plots will show up in ```results/plots```.
 
 ## Results
 
@@ -53,9 +75,9 @@ Our model achieves the following performance on :
 | ------------------ |---------------- | -------------- |
 | My awesome model   |     85%         |      95%       |
 
->📋  Include a table of results from your paper, and link back to the leaderboard for clarity and context. If your main result is a figure, include that figure and link to the command or notebook to reproduce it. 
 
+## License and Contributing
 
-## Contributing
+This respository is under the Apache License (Version 2.0). To contribute, simply clone the repository and open a pull request!
 
->📋  Pick a licence and describe how to contribute to your code repository. 
+Happy benchmarking!
