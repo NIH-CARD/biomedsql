@@ -1,7 +1,0 @@
-name: sql_benchmark
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  - python=3.10.11
-prefix: /gpfs/gsfs11/users/koretskymj/conda/envs/sql_benchmark
