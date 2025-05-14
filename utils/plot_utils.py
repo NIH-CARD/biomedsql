@@ -147,7 +147,7 @@ def sql_category_radar_plots(benchmark, bmsql, combo, react, baseline):
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels([])                       
     for angle, lab in zip(angles[:-1], labels):
-        if lab in ['Calculate','Similarity Search','Select','Distinct','Join']:
+        if lab in ['Calculate','Similarity Search','Select','Distinct']:
             radius_for_labels = 1.22
         else:
             radius_for_labels = 1.05
@@ -192,7 +192,7 @@ def sql_category_radar_plots(benchmark, bmsql, combo, react, baseline):
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels([])                       
     for angle, lab in zip(angles[:-1], labels):
-        if lab in ['Calculate','Similarity Search','Select','Distinct','Join']:
+        if lab in ['Calculate','Similarity Search','Select','Distinct']:
             radius_for_labels = 1.22
         else:
             radius_for_labels = 1.05
