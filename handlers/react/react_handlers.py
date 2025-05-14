@@ -227,7 +227,7 @@ class LLMInterface:
         self.model_name = model_name
         
         # Initialize the appropriate LLM client based on model_type
-        if model_type == "openai":
+        if model_type == "azure_openai":
             self.client = AzureOpenAILLM(llm_client = AZURE_CLIENT)
         elif model_type == "gemini":
             self.client = GeminiLLM(llm_client = GEMINI_CLIENT)

@@ -13,9 +13,7 @@ from llama_index.core.objects import SQLTableNodeMapping, ObjectIndex
 from llama_index.core import VectorStoreIndex
 from llama_index.core.indices.struct_store.sql_query import SQLTableRetrieverQueryEngine
 
-from handlers import CREDENTIALS
 from handlers.llamaindex import TABLE_SCHEMAS
-from handlers.llms import OPENAI_API_KEY, GEMINI_API_KEY
 
 @dataclass(frozen=True)
 class LlamaIndexSQL():
@@ -25,7 +23,7 @@ class LlamaIndexSQL():
     def initialize_sql_agent(project_id: str, database_name: str, llm_provider: str, model_name: str):
         try:
             bq_connection_uri = f"bigquery://{project_id}/{database_name}"
-            engine = create_engine(bq_connection_uri, credentials_path='config/service_account.json')
+            engine = create_engine(bq_connection_uri, credentials_path=os.environ["SERVICE_ACCOUNT_PATH"])
             sql_database = SQLDatabase(engine)
 
             if llm_provider == 'gemini':
@@ -35,22 +33,22 @@ class LlamaIndexSQL():
                 }
 
                 llm = GoogleGenAI(
-                    api_key=GEMINI_API_KEY,
+                    api_key=os.environ["GEMINI_API_KEY"],
                     model=model_name,
                     safety_settings=safety_config
                 )
                 embeddings = GoogleGenerativeAIEmbeddings(
-                    google_api_key=GEMINI_API_KEY,
+                    google_api_key=os.environ["GEMINI_API_KEY"],
                     model="models/gemini-embedding-exp-03-07"
                 )
             
             elif llm_provider == 'openai':
                 llm = OpenAI(
-                    api_key=OPENAI_API_KEY,
+                    api_key=os.environ["OPENAI_API_KEY"],
                     model=model_name
                 )
                 embeddings = OpenAIEmbeddings(
-                    api_key=OPENAI_API_KEY,
+                    api_key=os.environ["OPENAI_API_KEY"],
                     model="text-embedding-ada-002"
                 )
             else:
@@ -80,8 +78,8 @@ class LlamaIndexSQL():
         try:
             input_prompt = f'Question: {question} Always include the UUID column in your SELECT statements, except in cases of questions where the COUNT and ORDER BY functions are needed.'
             response = self.sql_agent.query(input_prompt)
-            final_sql_query = response.metadata.get("sql_query", "")
-            sql_query_results = response.metadata.get("result", "")
+            final_sql_query = str(response.metadata.get("sql_query", ""))
+            sql_query_results = str(response.metadata.get("result", ""))
             final_answer = str(response)
 
             return final_sql_query, sql_query_results, final_answer

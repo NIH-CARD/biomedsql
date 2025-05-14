@@ -2,7 +2,6 @@ import os
 import gc
 import shutil
 
-# os.environ['HF_HOME'] = '/data/CARD_AUX/users/koretskymj/CARD_AI/dt-ai-sql-benchmark/.cache'
 os.makedirs(os.environ.get('HF_HOME', '~/.cache'), exist_ok=True)
 
 import torch

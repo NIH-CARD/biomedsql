@@ -1,0 +1,45 @@
+paths:
+  prompts_dir: "prompts"
+  results_dir: "results"
+  benchmark_path: "data/benchmark_data/dev_sample.csv"
+
+experiment_models:
+  # - interaction: "bmsql"
+  #   provider: "azure_openai"
+  #   model: "gpt-4o"
+  # - interaction: "bmsql"
+  #   provider: "azure_openai"
+  #   model: "gpt-o3-mini"
+  # - interaction: "bmsql"
+  #   provider: "gemini"
+  #   model: "gemini-2.0-flash"
+  # - interaction: "react"
+  #   provider: "azure_openai"
+  #   model: "gpt-4o"
+  # - interaction: "react"
+  #   provider: "azure_openai"
+  #   model: "gpt-o3-mini"
+  # - interaction: "react"
+  #   provider: "gemini"
+  #   model: "gemini-2.0-flash"
+  - interaction: "index"
+    provider: "openai"
+    model: "gpt-4o"
+  - interaction: "index"
+    provider: "openai"
+    model: "o3-mini"
+  - interaction: "index"
+    provider: "gemini"
+    model: "gemini-2.0-flash"
+
+eval_model:
+  provider: "azure_openai"
+  model: "gpt-4o"
+
+experiments:
+  - name: "baseline"
+    num_passes: 1
+  - name: "compute-2"
+    num_passes: 2
+  - name: "compute-3"
+    num_passes: 3

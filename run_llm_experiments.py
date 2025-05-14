@@ -99,19 +99,12 @@ def run_pipeline(
             )
             sql_gen_end = time.perf_counter()
 
-            with open('test.txt', 'a+') as f:
-                f.write(f"{row['question']}\n")
-                f.write(f'{sql_query}\n')
-
             row_result['sql_input_tokens'] = sql_input_tokens
             row_result['sql_gen_response'] = sql_gen_response
             row_result['sql_gen_time'] = sql_gen_end - sql_gen_start
 
             if sql_gen_response == 1:
                 parsed_sql_query, sql_returned = parse_sql_query(query=sql_query)
-
-                with open(f'test.txt', 'a+') as f:
-                    f.write(f"{parsed_sql_query}\n\n")
 
                 row_result['parsed_sql_query'] = parsed_sql_query
                 row_result['sql_returned'] = sql_returned
@@ -178,7 +171,7 @@ def run_pipeline(
 
         results_df = pd.DataFrame(results_list)
     else:
-        results_df = pd.read_csv(f'{out_dir}/{model}-{experiment}-results.csv')
+        results_df = pd.read_csv(f'{out_dir}/experiment_results/{model}-{experiment}-results.csv')
 
     metrics_df, results = analyze_results(
         results=results_df,
@@ -203,7 +196,7 @@ def main():
         paths = config.get("paths", {})
         prompts_dir = paths.get("prompts_dir", "prompts")
         results_dir = paths.get("results_dir", "results")
-        benchmark_path = paths.get("benchmark_path", "data/benchmark_data/CARDBiomedBenchSQL_sample500.csv")
+        benchmark_path = paths.get("benchmark_path", "data/benchmark_data/dev_sample.csv")
 
         eval_model = config.get("eval_model", {})
         eval_model_provider = eval_model.get("provider", "azure_openai")
@@ -223,8 +216,6 @@ def main():
             )
             benchmark = benchmark_hf['train'].to_pandas()
             benchmark.to_csv(benchmark_path, index=None)
-            
-        benchmark = benchmark.head(2)
 
         if eval_model_provider == 'azure_openai':
             llm_eval_handler = AzureOpenAILLM(AZURE_CLIENT)
@@ -259,7 +250,6 @@ def main():
                         device=device
                     )
                     model_name = model_name.split('/')[1]
-                    print(model_name)
                 else:
                     raise ValueError(f'Invalid LLM Provider Passed: {model_provider}.')
 
@@ -286,7 +276,8 @@ def main():
                             dataset_id='bio_sql_benchmark',
                             num_rows=num_rows
                         )
-
+                        
+                        # set rerun to false to rely on previously generated experiments
                         run_pipeline(
                             benchmark=benchmark,
                             llm_handler=llm_handler,

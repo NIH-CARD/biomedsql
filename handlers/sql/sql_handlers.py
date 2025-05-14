@@ -22,7 +22,7 @@ def count_tokens_tiktoken(string: str, model: str = "gpt-4o") -> int:
 
 @typechecked
 @dataclass(frozen=True)
-class SQLAPI:
+class SQLHandler:
     """
     A class to interact with SQL agent resources.
     This class encapsulates the logic for running SQL queries.
@@ -33,7 +33,7 @@ class SQLAPI:
     llm_query_params: Dict[str, Any]
     bq_handler: BigQuery
 
-    async def execute_sql_query(self, query: str):
+    def execute_sql_query(self, query: str):
         """Execute a SQL query on BigQuery and return (results, failed_flag)."""
         execution_failed = False
         try:
@@ -46,7 +46,7 @@ class SQLAPI:
             execution_failed = True
             return [], execution_failed
 
-    async def get_relevant_columns(self, question: str):
+    def get_relevant_columns(self, question: str):
         """
         Calls AzureOpenAI to parse the schema and figure out which columns might be relevant.
         """
@@ -73,7 +73,7 @@ class SQLAPI:
         """
         tokens = count_tokens_tiktoken(prompt)
 
-        response = await self.llm.query_async(
+        response = self.llm.query(
             model_name=self.llm_query_params['model'],
             max_tokens=self.llm_query_params['max_tokens'],
             temperature=self.llm_query_params['temperature'],
@@ -82,7 +82,7 @@ class SQLAPI:
         
         return response, tokens
 
-    async def sql_query_checker(
+    def sql_query_checker(
         self,
         question: str,
         relevant_columns: str,
@@ -129,7 +129,7 @@ class SQLAPI:
         """
         tokens = count_tokens_tiktoken(prompt)
 
-        response = await self.llm.query_async(
+        response = self.llm.query(
             model_name=self.llm_query_params['model'],
             max_tokens=self.llm_query_params['max_tokens'],
             temperature=self.llm_query_params['temperature'],
@@ -138,7 +138,7 @@ class SQLAPI:
         
         return response.strip(), tokens
 
-    async def generate_sql_query(
+    def generate_sql_query(
         self,
         question: str,
         relevant_columns: str
@@ -176,7 +176,7 @@ class SQLAPI:
         """
         tokens = count_tokens_tiktoken(prompt)
 
-        response = await self.llm.query_async(
+        response = self.llm.query(
             model_name=self.llm_query_params['model'],
             max_tokens=self.llm_query_params['max_tokens'],
             temperature=self.llm_query_params['temperature'],
@@ -185,7 +185,7 @@ class SQLAPI:
         
         return response.strip(), tokens
 
-    async def extract_sql_code(self, text: str):
+    def extract_sql_code(self, text: str):
         """
         Extract the SQL from a ```sql ... ``` block
         """
@@ -196,7 +196,7 @@ class SQLAPI:
         print("No SQL code block found in text.")
         return ""
 
-    async def generate_refined_sql(
+    def generate_refined_sql(
         self,
         question: str,
         sql_query: str,
@@ -251,7 +251,7 @@ class SQLAPI:
         """
         tokens = count_tokens_tiktoken(prompt)
 
-        response = await self.llm.query_async(
+        response = self.llm.query(
             model_name=self.llm_query_params['model'],
             max_tokens=self.llm_query_params['max_tokens'],
             temperature=self.llm_query_params['temperature'],
@@ -267,7 +267,7 @@ class SQLAPI:
             return match.group(1).strip(), tokens
         return sql_query, tokens
 
-    async def aggregated_response(
+    def aggregated_response(
         self,
         question: str,
         sql_query_1: str,
@@ -293,7 +293,7 @@ class SQLAPI:
         """
         tokens = count_tokens_tiktoken(prompt)
 
-        response = await self.llm.query_async(
+        response = self.llm.query(
             model_name=self.llm_query_params['model'],
             max_tokens=self.llm_query_params['max_tokens'],
             temperature=self.llm_query_params['temperature'],
@@ -302,7 +302,7 @@ class SQLAPI:
 
         return response.strip(), tokens
 
-    async def sufficient_response(
+    def sufficient_response(
         self,
         question: str,
         sql_query_1: str,
@@ -337,7 +337,7 @@ class SQLAPI:
 
         tokens = count_tokens_tiktoken(prompt)
 
-        response = await self.llm.query_async(
+        response = self.llm.query(
             model_name=self.llm_query_params['model'],
             max_tokens=self.llm_query_params['max_tokens'],
             temperature=self.llm_query_params['temperature'],

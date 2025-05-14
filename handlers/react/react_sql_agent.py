@@ -48,7 +48,7 @@ class ReACTSQLAgent:
             error_msg = f"Failed to initialize ReACTSQLAgent: {e}"
             raise ValueError(error_msg)
     
-    def run(self, question: str) -> SQLAgentResponse:
+    def run_agent(self, question: str) -> SQLAgentResponse:
         """
         Run the ReACT SQL agent to answer a question.
         

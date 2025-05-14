@@ -1,4 +1,3 @@
-
 paths:
   prompts_dir: "prompts"
   results_dir: "results"
@@ -22,9 +21,9 @@ experiment_models:
   - provider: "huggingface"
     model: "meta-llama/Llama-3.1-70B-Instruct"
   - provider: "huggingface"
-    model: "Qwen/Qwen2.5-Coder-32B"
+    model: "Qwen/Qwen2.5-Coder-32B-Instruct"
   - provider: "huggingface"
-    model: "Qwen/Qwen2.5-Coder-14B"
+    model: "Qwen/Qwen2.5-Coder-14B-Instruct"
 
 eval_model:
   provider: "azure_openai"

@@ -1,6 +1,7 @@
 # Repo specific
 config/.env
 config/service_account.json
+config/service_account2.json
 data/*
 results/*
 
