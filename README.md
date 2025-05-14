@@ -1,5 +1,7 @@
 # BiomedSQL: BiomedSQL: A Text-to-SQL Benchmark for Scientific Reasoning on Biomedical Knowledge Bases 
 
+![Alt text](assets/text-to-sql-workflow.png)
+
 ## Requirements
 
 To install requirements, create a new environment with conda:
@@ -17,12 +19,12 @@ pip install -r requirements.txt
 
 BiomedSQL requires the extensive use of both opened a closed source LLMs. The following services are needed to run the full set of experiments:
 
-*AzureOpenAI (with endpoints for gpt-4o, gpt-4o-mini, and gpt-o3-mini)
-*AzureAI (with an endpoint for Meta-Llama-405B)
-*Gemini (for access to gemini-2.0-flash and gemini-2.0-flash-lite)
-*OpenAI (for access to the general completions() API for use in the Schema Indexing interaction paradigm)
-*Anthtropic (for access to claude-3-7-sonnet)
-*HuggingFace (for access to gated Meta-Llama repositories)
+* AzureOpenAI (with endpoints for gpt-4o, gpt-4o-mini, and gpt-o3-mini)
+* AzureAI (with an endpoint for Meta-Llama-405B)
+* Gemini (for access to gemini-2.0-flash and gemini-2.0-flash-lite)
+* OpenAI (for access to the general completions() API for use in the Schema Indexing interaction paradigm)
+* Anthtropic (for access to claude-3-7-sonnet)
+* HuggingFace (for access to gated Meta-Llama repositories)
 
 See ```config/sample.env``` for a complete list of specific information needed from each provider. Once complete, please move this file to ```config/.env``` for seamless use in the current experiment setup.
 
@@ -41,9 +43,9 @@ python run_llm_experiments.py
 ```
 
 Currently we use the following open-source models and detail the following compute requirements to run our experiment pipeline as-is:
-*meta-llama/Llama-3.1-70B-Instruct (three NVIDIA 80GB A100 GPUs)
-*Qwen/Qwen2.5-Coder-32B-Instruct (two NVIDIA 80GB A100 GPUs)
-*Qwen/Qwen2.5-Coder-14B-Instruct (two NVIDIA 80GB A100 GPUs)
+* meta-llama/Llama-3.1-70B-Instruct (three NVIDIA 80GB A100 GPUs)
+* Qwen/Qwen2.5-Coder-32B-Instruct (two NVIDIA 80GB A100 GPUs)
+* Qwen/Qwen2.5-Coder-14B-Instruct (two NVIDIA 80GB A100 GPUs)
 
 We understand that GPU access may differ from user to user, so in order to run our experiments without the need for GPUs, please comment out any models specified with ```provider: huggingface``` under the ```experiment_models``` section of ```config/llm_config.yaml```.
 
@@ -67,13 +69,13 @@ Tables will show up in ```results``` and plots will show up in ```results/plots`
 
 ## Results
 
-Our model achieves the following performance on :
+On BiomedSQL, GPT-o3-mini is consistently the top-performing model on the variety of experiments performed. However, even when paired with our custom-built text-to-SQL system (BMSQL), it still falls short of domain-expert level performance.
 
-### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
-
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
-| ------------------ |---------------- | -------------- |
-| My awesome model   |     85%         |      95%       |
+| Model name             | Execution Accuracy    | Response Quality Rate |
+| ---------------------- | --------------------- | --------------------- |
+| GPT-o3-mini-baseline   |        53.5%          |          73.3%        |
+| GPT-o3-mini-combo      |        59.0%          |          77.8%        |
+| BMSQL-GPT-o3-mini      |        62.6%          |          84.6%        |
 
 
 ## License and Contributing
