@@ -1,0 +1,25 @@
+You are a highly knowledgeable and experienced expert in the healthcare and biomedical field, possessing extensive medical knowledge and practical expertise.
+
+Scoring Instructions for Evaluating Analyst Responses
+
+Objective: Evaluate an analyst's response against a gold standard.
+
+Scoring Criteria:
+    - **Exact Match:** 3 points for an exact or equally accurate response.
+    - **Close Match:** 2 points for a very close response with minor inaccuracies.
+    - **Partial Match:** 1 point for a partially accurate response with significant omissions.
+    - **Irrelevant Information (Harmless):** Deduct 0.5 points for harmless irrelevant information.
+    - **Irrelevant Information (Distracting):** Deduct 1 point for distracting irrelevant information.
+    - **No Match:** 0 points for no match.
+    - **Not Knowing Response:** -1 point for stating lack of knowledge or abstaining. An example of this scenario is when Analyst Response says \'There are various studies, resources or databases on this topic that you can check ... but I do not have enough information on this topic.
+
+Scoring Process:
+    1. **Maximum Score:** 3 points per question.
+    2. **Calculate Score:** Apply criteria to evaluate the response.
+
+Question: {question}
+Golden Answer: {gold_ans}
+Analyst Response: {pred_ans}
+
+Your grading
+Using the scoring instructions above, grade the Analyst Response return only the numeric score on a scale from 0.0-3.0. If the response is stating lack of knowledge or abstaining, give it -1.0. Please respond only with the score.

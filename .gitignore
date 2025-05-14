@@ -1,6 +1,8 @@
 # Repo specific
 config/.env
 config/service_account.json
+data/*
+results/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

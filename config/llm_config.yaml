@@ -1,0 +1,65 @@
+
+paths:
+  prompts_dir: "prompts"
+  results_dir: "results"
+  benchmark_path: "data/benchmark_data/dev_sample.csv"
+
+experiment_models:
+  - provider: "azure_openai"
+    model: "gpt-4o"
+  - provider: "azure_openai"
+    model: "gpt-4o-mini"
+  - provider: "azure_openai"
+    model: "gpt-o3-mini"
+  - provider: "gemini"
+    model: "gemini-2.0-flash"
+  - provider: "gemini"
+    model: "gemini-2.0-flash-lite"
+  - provider: "anthropic"
+    model: "claude-3-7-sonnet-20250219"
+  - provider: "azure_ai"
+    model: "Meta-Llama-3.1-405B-Instruct"
+  - provider: "huggingface"
+    model: "meta-llama/Llama-3.1-70B-Instruct"
+  - provider: "huggingface"
+    model: "Qwen/Qwen2.5-Coder-32B"
+  - provider: "huggingface"
+    model: "Qwen/Qwen2.5-Coder-14B"
+
+eval_model:
+  provider: "azure_openai"
+  model: "gpt-4o"
+
+experiments:
+  - name: "baseline"
+    num_rows: 0
+    num_examples: 0
+    thresholds: False
+  - name: "3-rows"
+    num_rows: 3
+    num_examples: 0
+    thresholds: False
+  - name: "5-rows"
+    num_rows: 5
+    num_examples: 0
+    thresholds: False
+  - name: "1-shot"
+    num_rows: 0
+    num_examples: 1
+    thresholds: False
+  - name: "3-shot"
+    num_rows: 0
+    num_examples: 3
+    thresholds: False
+  - name: "5-shot"
+    num_rows: 0
+    num_examples: 5
+    thresholds: False
+  - name: "threshold"
+    num_rows: 0
+    num_examples: 0
+    thresholds: True
+  - name: "combo"
+    num_rows: 3
+    num_examples: 3
+    thresholds: True

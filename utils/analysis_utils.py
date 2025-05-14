@@ -59,31 +59,11 @@ def analyze_results(results, benchmark, model, experiment, plots_dir='results/pl
     metrics['model'] = model
     metrics['experiment'] = experiment
 
-    # sql gen prompt length
-    metrics['sql_gen_prompt_mean'] = results['sql_input_tokens'].mean()
-    metrics['sql_gen_prompt_ci'] = 1.96 * (results['sql_input_tokens'].std() / np.sqrt(len(results['sql_input_tokens'])))
-
-    # sql gen time
-    metrics['sql_gen_time_mean'] = results['sql_gen_time'].mean()
-    metrics['sql_gen_time_ci'] = 1.96 * (results['sql_gen_time'].std() / np.sqrt(len(results['sql_gen_time'])))
-
-    # sql exec time
-    metrics['sql_exec_time_mean'] = results['sql_exec_time'].mean()
-    metrics['sql_exec_time_se'] = 1.96 * (results['sql_exec_time'].std() / np.sqrt(len(results['sql_exec_time'])))
-
     results['sql_ran'] = np.where(results['sql_ran'].isna(), 0, results['sql_ran'])
     total_count = len(results['sql_ran'])
     sql_syntax_error_rate =  1 - results['sql_ran'].mean()
     metrics['sql_syntax_error_rate'] = sql_syntax_error_rate
     metrics['sql_syntax_error_rate_ci'] = 1.96 * (np.sqrt((sql_syntax_error_rate * (1 - sql_syntax_error_rate)) / total_count)) if not np.isnan(sql_syntax_error_rate) else np.nan
-
-    # answer gen prompt length
-    metrics['answer_gen_prompt_mean'] = results['answer_input_tokens'].mean()
-    metrics['answer_gen_prompt_ci'] = 1.96 * (results['answer_input_tokens'].std() / np.sqrt(len(results['answer_input_tokens'])))
-
-    # answer gen time
-    metrics['answer_gen_time_mean'] = results['answer_gen_time'].mean()
-    metrics['answer_gen_time_ci'] =  1.96 * (results['answer_gen_time'].std() / np.sqrt(len(results['answer_gen_time'])))
 
     # total time
     metrics['total_time_mean'] = results['total_time'].mean()
@@ -175,7 +155,12 @@ def analyze_results(results, benchmark, model, experiment, plots_dir='results/pl
     plt.title(f'{model}')
     plt.savefig(f'{plots_dir}/{model}-{experiment}-ex-heatmap.png')
 
+    results_df = merge.drop(
+        columns=['execution_results','gold_exec_results','gold_df','llm_exec_results','llm_df','bins'],
+        axis=1
+    )
+
     # dictionary to transposed df to make reading easy
     metrics_df = pd.DataFrame([metrics])
     
-    return metrics_df, merge
+    return metrics_df, results_df

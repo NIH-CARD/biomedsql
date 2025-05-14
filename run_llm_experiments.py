@@ -4,11 +4,12 @@ import yaml
 import time
 import torch
 import pandas as pd
+from datasets import load_dataset
 
 from handlers.gcp import BQ_CLIENT
 from handlers.gcp.big_query import BigQuery
 
-from handlers.llms import AZURE_CLIENT, AZURE_AI_CLIENT, GEMINI_CLIENT, HF_TOKEN, ANTHROPIC_CLIENT
+from handlers.llms import AZURE_CLIENT, AZURE_AI_CLIENT, GEMINI_CLIENT, ANTHROPIC_CLIENT
 from handlers.llms.hf_llm import HuggingFaceLLM
 from handlers.llms.azure_openai_llm import AzureOpenAILLM
 from handlers.llms.azure_ai_llm import AzureAILLM
@@ -20,10 +21,14 @@ from utils.experiments_utils import (
 )
 from utils.analysis_utils import analyze_results
 
-OPENAI_MODEL_MAPPING = {
+AZURE_OPENAI_MODEL_MAPPING = {
     'gpt-4o': os.environ["AZURE_OPENAI_GPT_4o"],
     'gpt-4o-mini': os.environ["AZURE_OPENAI_GPT_4o_mini"],
     'gpt-o3-mini': os.environ["AZURE_OPENAI_GPT_o3_mini"]
+}
+
+AZURE_AI_MODEL_MAPPING = {
+    'Meta-Llama-3.1-405B-Instruct': os.environ["AZURE_AI_LLAMA_405B"]
 }
     
 def run_pipeline(
@@ -43,12 +48,14 @@ def run_pipeline(
         rerun=True
 ):  
     if isinstance(llm_handler, AzureOpenAILLM):
-        model_name = OPENAI_MODEL_MAPPING.get(model, 'gpt-4o')
+        model_name = AZURE_OPENAI_MODEL_MAPPING.get(model, 'gpt-4o')
+    elif isinstance(llm_handler, AzureAILLM):
+        model_name = AZURE_AI_MODEL_MAPPING.get(model, 'Meta-Llama-3.1-405B-Instruct')
     else:
         model_name = model
 
     if isinstance(llm_eval_handler, AzureOpenAILLM):
-        llm_eval_model_name = OPENAI_MODEL_MAPPING.get(llm_eval_model, 'gpt-4o')
+        llm_eval_model_name = AZURE_OPENAI_MODEL_MAPPING.get(llm_eval_model, 'gpt-4o')
     else:
         llm_eval_model_name = llm_eval_model
     
@@ -68,8 +75,10 @@ def run_pipeline(
 
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(plots_dir, exist_ok=True)
+    os.makedirs(f'{out_dir}/experiment_results', exist_ok=True)
+    os.makedirs(f'{plots_dir}/experiment_plots', exist_ok=True)
 
-    if rerun or not os.path.isfile(f'{out_dir}/{model}-{experiment}-results.csv'):
+    if rerun or not os.path.isfile(f'{out_dir}/experiment_results/{model}-{experiment}-results.csv'):
         for ind, row in benchmark.iterrows():
             row_result = {col: None for col in columns}
             row_result['uuid'] = row['uuid']
@@ -168,21 +177,22 @@ def run_pipeline(
             results_list.append(row_result)
 
         results_df = pd.DataFrame(results_list)
-        results_df.to_csv(f'{out_dir}/{model}-{experiment}-results.csv', index=None)
     else:
         results_df = pd.read_csv(f'{out_dir}/{model}-{experiment}-results.csv')
 
-    metrics_df = analyze_results(
+    metrics_df, results = analyze_results(
         results=results_df,
         benchmark=benchmark,
         model=model,
         experiment=experiment,
-        plots_dir=plots_dir
+        plots_dir=f'{plots_dir}/experiment_plots'
     )
-    metrics_df.to_csv(f'{out_dir}/{model}-{experiment}-metrics.csv', index=False)
+
+    results.to_csv(f'{out_dir}/experiment_results/{model}-{experiment}-results.csv', index=False)
+    metrics_df.to_csv(f'{out_dir}/experiment_results/{model}-{experiment}-metrics.csv', index=False)
 
 def main():
-    config_path = 'config/config.yaml'
+    config_path = 'config/llm_config.yaml'
 
     bq_handler = BigQuery(BQ_CLIENT)
 
@@ -202,7 +212,18 @@ def main():
         experiment_models = config.get("experiment_models")
         experiments = config.get("experiments")
 
-        benchmark = pd.read_csv(benchmark_path)
+        if os.path.isfile(benchmark_path):
+            benchmark = pd.read_csv(benchmark_path)
+        else:
+            os.makedirs('data', exist_ok=True)
+            os.makedirs('data/benchmark_data', exist_ok=True)
+            benchmark_hf = load_dataset(
+                "csv",
+                data_files='https://huggingface.co/datasets/NIH-CARD/BiomedSQL/resolve/main/benchmark_data/dev_sample.csv'
+            )
+            benchmark = benchmark_hf['train'].to_pandas()
+            benchmark.to_csv(benchmark_path, index=None)
+            
         benchmark = benchmark.head(2)
 
         if eval_model_provider == 'azure_openai':
@@ -249,22 +270,23 @@ def main():
                     num_examples = experiment.get("num_examples", 0)
                     thresholds = experiment.get("thresholds", False)
 
-                    schema = create_table_info(
-                        bq_handler=bq_handler,
-                        dataset_id='bio_sql_benchmark',
-                        num_rows=num_rows
-                    )
-
-                    if experiment == 'baseline':
+                    if experiment_name == 'baseline':
                         run_experiment = True
-
-                    elif experiment != 'baseline' and model_name == 'gpt-o3-mini':
+                    elif model_name == 'gpt-o3-mini':
                         run_experiment = True
-                    
                     else:
                         run_experiment = False
 
+                    print(model_name, experiment_name)
+
                     if run_experiment:
+
+                        schema = create_table_info(
+                            bq_handler=bq_handler,
+                            dataset_id='bio_sql_benchmark',
+                            num_rows=num_rows
+                        )
+
                         run_pipeline(
                             benchmark=benchmark,
                             llm_handler=llm_handler,
@@ -276,16 +298,19 @@ def main():
                             experiment=experiment_name,
                             num_examples=num_examples,
                             thresholds=thresholds,
+                            prompts_dir=prompts_dir,
+                            out_dir=results_dir,
+                            plots_dir=f'{results_dir}/plots',
                             rerun=True
                         )
 
-                    if model_provider == 'huggingface':
-                        try:
-                            del model
-                        except Exception as e:
-                            print('Could not delete model')
-                        gc.collect()
-                        torch.cuda.empty_cache()
+                        if model_provider == 'huggingface':
+                            try:
+                                del model
+                            except Exception as e:
+                                print('Could not delete model')
+                            gc.collect()
+                            torch.cuda.empty_cache()
         else:
             raise ValueError(f'No Experiment Models or Experiments Passed via config/config.yaml.')
     else:

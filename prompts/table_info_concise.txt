@@ -1,0 +1,163 @@
+Tables in dataset bio_sql_benchmark
+AlzheimerDisease_CombinedGeneData_UUID
+AlzheimerDisease_GeneAssoc_Pathways_UUID
+DrugGeneTargets_ComprehensiveAnnotations_updated
+DrugTargets_IndicationsAndTherapeuticUses
+DrugTargets_LiscensingAndUses
+NeurodegenerativeDisease_AlleleFrequencies_UUID
+NeurodegenerativeDiseases_SMR_Genes_Full
+ParkinsonDisease_CompleteGeneData_No23andMe
+ParkinsonDisease_GeneAssoc_Pathways_UUID
+
+Schema details for tables in dataset bio_sql_benchmark
+
+Table: AlzheimerDisease_CombinedGeneData_UUID
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: SNP | Type: STRING | Mode: NULLABLE
+  - Name: A1 | Type: STRING | Mode: NULLABLE
+  - Name: A2 | Type: STRING | Mode: NULLABLE
+  - Name: freq | Type: FLOAT | Mode: NULLABLE
+  - Name: b | Type: FLOAT | Mode: NULLABLE
+  - Name: se | Type: FLOAT | Mode: NULLABLE
+  - Name: p | Type: FLOAT | Mode: NULLABLE
+  - Name: chr_37 | Type: INTEGER | Mode: NULLABLE
+  - Name: bp_37 | Type: INTEGER | Mode: NULLABLE
+  - Name: chr_38 | Type: INTEGER | Mode: NULLABLE
+  - Name: bp_38 | Type: INTEGER | Mode: NULLABLE
+  - Name: nearestGene | Type: STRING | Mode: NULLABLE
+Table: AlzheimerDisease_GeneAssoc_Pathways_UUID
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: genes | Type: STRING | Mode: NULLABLE
+  - Name: size | Type: INTEGER | Mode: NULLABLE
+  - Name: statistic | Type: FLOAT | Mode: NULLABLE
+  - Name: p | Type: FLOAT | Mode: NULLABLE
+Table: DrugGeneTargets_ComprehensiveAnnotations_updated
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: chemblIdentifier | Type: STRING | Mode: NULLABLE
+  - Name: blackBoxWarning | Type: BOOLEAN | Mode: NULLABLE
+  - Name: drugName | Type: STRING | Mode: NULLABLE
+  - Name: drugMolecularType | Type: STRING | Mode: NULLABLE
+  - Name: yearOfFirstApproval | Type: INTEGER | Mode: NULLABLE
+  - Name: maxClinicalTrialPhase | Type: INTEGER | Mode: NULLABLE
+  - Name: drugHasBeenWithdrawn | Type: BOOLEAN | Mode: NULLABLE
+  - Name: drugIsApproved | Type: BOOLEAN | Mode: NULLABLE
+  - Name: tradeNames_string | Type: STRING | Mode: NULLABLE
+  - Name: drugSynonyms_string | Type: STRING | Mode: NULLABLE
+  - Name: linkedDiseasesDrug_string | Type: STRING | Mode: NULLABLE
+  - Name: linkedDiseasesCount | Type: INTEGER | Mode: NULLABLE
+  - Name: newLinkedTargets_string | Type: STRING | Mode: NULLABLE
+  - Name: numberLinkedTargets | Type: INTEGER | Mode: NULLABLE
+  - Name: drugDescription | Type: STRING | Mode: NULLABLE
+  - Name: drugActionType | Type: STRING | Mode: NULLABLE
+  - Name: drugMechanismOfAction | Type: STRING | Mode: NULLABLE
+  - Name: tradename_count | Type: INTEGER | Mode: NULLABLE
+  - Name: synonyms_count | Type: INTEGER | Mode: NULLABLE
+Table: DrugTargets_IndicationsAndTherapeuticUses
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: chemblId | Type: STRING | Mode: NULLABLE
+  - Name: drugName | Type: STRING | Mode: NULLABLE
+  - Name: tradeName | Type: STRING | Mode: NULLABLE
+  - Name: drugType | Type: STRING | Mode: NULLABLE
+  - Name: actionType | Type: STRING | Mode: NULLABLE
+  - Name: targetType | Type: STRING | Mode: NULLABLE
+  - Name: target | Type: STRING | Mode: NULLABLE
+  - Name: approvedSymbol | Type: STRING | Mode: NULLABLE
+  - Name: approvedName | Type: STRING | Mode: NULLABLE
+  - Name: yearOfFirstApproval | Type: INTEGER | Mode: NULLABLE
+  - Name: usan_year | Type: FLOAT | Mode: NULLABLE
+  - Name: patent_no | Type: STRING | Mode: NULLABLE
+  - Name: max_phase_for_ind | Type: FLOAT | Mode: NULLABLE
+  - Name: mesh_id | Type: STRING | Mode: NULLABLE
+  - Name: mesh_heading | Type: STRING | Mode: NULLABLE
+  - Name: efo_id | Type: STRING | Mode: NULLABLE
+  - Name: efo_term | Type: STRING | Mode: NULLABLE
+  - Name: tradeNames_list | Type: STRING | Mode: NULLABLE
+  - Name: tradename_count | Type: INTEGER | Mode: NULLABLE
+  - Name: syns_list | Type: STRING | Mode: NULLABLE
+  - Name: synonyms_count | Type: INTEGER | Mode: NULLABLE
+  - Name: ct | Type: STRING | Mode: NULLABLE
+Table: DrugTargets_LiscensingAndUses
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: applicant | Type: STRING | Mode: NULLABLE
+  - Name: blaNumber | Type: INTEGER | Mode: NULLABLE
+  - Name: drugName | Type: STRING | Mode: NULLABLE
+  - Name: properName | Type: STRING | Mode: NULLABLE
+  - Name: blaType | Type: STRING | Mode: NULLABLE
+  - Name: strength | Type: STRING | Mode: NULLABLE
+  - Name: dosageForm | Type: STRING | Mode: NULLABLE
+  - Name: routeOfAdministration | Type: STRING | Mode: NULLABLE
+  - Name: productPresentation | Type: STRING | Mode: NULLABLE
+  - Name: marketingStatus | Type: STRING | Mode: NULLABLE
+  - Name: licensure | Type: STRING | Mode: NULLABLE
+  - Name: submissionType | Type: STRING | Mode: NULLABLE
+  - Name: licenseNumber | Type: INTEGER | Mode: NULLABLE
+  - Name: productNumber | Type: INTEGER | Mode: NULLABLE
+  - Name: center | Type: STRING | Mode: NULLABLE
+Table: NeurodegenerativeDisease_AlleleFrequencies_UUID
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: chr_38 | Type: INTEGER | Mode: NULLABLE
+  - Name: SNP | Type: STRING | Mode: NULLABLE
+  - Name: A1 | Type: STRING | Mode: NULLABLE
+  - Name: A2 | Type: STRING | Mode: NULLABLE
+  - Name: freq | Type: FLOAT | Mode: NULLABLE
+Table: NeurodegenerativeDiseases_SMR_Genes_Full
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: Omic | Type: STRING | Mode: NULLABLE
+  - Name: Disease | Type: STRING | Mode: NULLABLE
+  - Name: probeID | Type: STRING | Mode: NULLABLE
+  - Name: ProbeChr | Type: INTEGER | Mode: NULLABLE
+  - Name: Gene | Type: STRING | Mode: NULLABLE
+  - Name: Probe_bp | Type: INTEGER | Mode: NULLABLE
+  - Name: topSNP | Type: STRING | Mode: NULLABLE
+  - Name: topSNP_chr | Type: INTEGER | Mode: NULLABLE
+  - Name: topSNP_bp | Type: INTEGER | Mode: NULLABLE
+  - Name: A1 | Type: STRING | Mode: NULLABLE
+  - Name: A2 | Type: STRING | Mode: NULLABLE
+  - Name: Freq | Type: FLOAT | Mode: NULLABLE
+  - Name: b_GWAS | Type: FLOAT | Mode: NULLABLE
+  - Name: se_GWAS | Type: FLOAT | Mode: NULLABLE
+  - Name: p_GWAS | Type: FLOAT | Mode: NULLABLE
+  - Name: b_eQTL | Type: FLOAT | Mode: NULLABLE
+  - Name: se_eQTL | Type: FLOAT | Mode: NULLABLE
+  - Name: p_eQTL | Type: FLOAT | Mode: NULLABLE
+  - Name: b_SMR | Type: FLOAT | Mode: NULLABLE
+  - Name: se_SMR | Type: FLOAT | Mode: NULLABLE
+  - Name: p_SMR | Type: FLOAT | Mode: NULLABLE
+  - Name: p_SMR_multi | Type: FLOAT | Mode: NULLABLE
+  - Name: p_HEIDI | Type: FLOAT | Mode: NULLABLE
+  - Name: nsnp_HEIDI | Type: FLOAT | Mode: NULLABLE
+  - Name: topRSID | Type: STRING | Mode: NULLABLE
+  - Name: Omic_type | Type: STRING | Mode: NULLABLE
+  - Name: Omic_tissue | Type: STRING | Mode: NULLABLE
+  - Name: Disease_name | Type: STRING | Mode: NULLABLE
+  - Name: Source | Type: STRING | Mode: NULLABLE
+  - Name: func_sig | Type: STRING | Mode: NULLABLE
+Table: ParkinsonDisease_CompleteGeneData_No23andMe
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: SNP | Type: STRING | Mode: NULLABLE
+  - Name: A1 | Type: STRING | Mode: NULLABLE
+  - Name: A2 | Type: STRING | Mode: NULLABLE
+  - Name: freq | Type: FLOAT | Mode: NULLABLE
+  - Name: b | Type: FLOAT | Mode: NULLABLE
+  - Name: se | Type: FLOAT | Mode: NULLABLE
+  - Name: p | Type: FLOAT | Mode: NULLABLE
+  - Name: chr_37 | Type: INTEGER | Mode: NULLABLE
+  - Name: bp_37 | Type: INTEGER | Mode: NULLABLE
+  - Name: chr_38 | Type: INTEGER | Mode: NULLABLE
+  - Name: bp_38 | Type: INTEGER | Mode: NULLABLE
+  - Name: nearestGene | Type: STRING | Mode: NULLABLE
+Table: ParkinsonDisease_GeneAssoc_Pathways_UUID
+Schema:
+  - Name: UUID | Type: STRING | Mode: NULLABLE
+  - Name: genes | Type: STRING | Mode: NULLABLE
+  - Name: size | Type: INTEGER | Mode: NULLABLE
+  - Name: statistic | Type: FLOAT | Mode: NULLABLE
+  - Name: p | Type: FLOAT | Mode: NULLABLE

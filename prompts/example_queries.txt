@@ -1,0 +1,32 @@
+Below are example BigQuery queries to guide you (for reference only, do not repeat verbatim unless needed by the user’s request):
+Example 1:
+    SELECT DISTINCT drugName, drugIsApproved, newLinkedTargets_string 
+    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    WHERE newLinkedTargets_string LIKE "%TUBB %" 
+    AND drugIsApproved = TRUE
+    LIMIT 1000;
+
+Example 2:
+    SELECT SNP, A1 AS effect_allele, freq AS effect_allele_frequency, A2 AS non_effect_allele, 1 - freq AS non_effect_allele_frequency
+    FROM `card-ai-389220.bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
+    WHERE SNP = 'rs61769339'
+    LIMIT 10;
+
+Example 3:
+    SELECT drugName, newLinkedTargets_string, drugIsApproved
+    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    WHERE newLinkedTargets_string LIKE '%ACACA%'
+    AND drugIsApproved = TRUE
+    LIMIT 1000;
+
+Example 4:
+    SELECT topRSID, Disease, Gene, p_SMR_multi, p_HEIDI, b_SMR
+    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    WHERE Disease = 'FTD' AND Gene = 'ORC3' AND p_SMR_multi < 2.95e-6
+    LIMIT 100
+
+Example 5:
+    SELECT DISTINCT drugName, tradeNames_list, drugType, actionType, target, approvedSymbol, approvedName, yearOfFirstApproval, max_phase_for_ind, mesh_heading, efo_term
+    FROM `card-ai-389220.bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses`
+    WHERE (LOWER(efo_term) = ""acute hepatic porphyria"" OR LOWER(mesh_heading) = ""acute hepatic porphyria"") AND LOWER(drugType) = ""oligonucleotide"" AND yearOfFirstApproval > 0 AND max_phase_for_ind = 4.0
+    LIMIT 100
