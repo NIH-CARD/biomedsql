@@ -6,15 +6,17 @@
 
 ## Requirements
 
+We provide conda environment.yml and requirements.txt files for both MacOS and Linux.
+
 To install requirements, we recommend creating a new environment with conda:
 ```setup
-conda env create -f environment.yml
+conda env create -f mac_environment.yml
 ```
 
 Or install via pip:
 
 ```setup
-pip install -r requirements.txt
+pip install -r mac_requirements.txt
 ```
 
 ## Environment Setup
