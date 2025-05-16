@@ -32,6 +32,10 @@ BiomedSQL requires the extensive use of both opened a closed source LLMs. The fo
 
 See ```config/sample.env``` for a complete list of specific information needed from each provider. Once complete, please move this file to ```config/.env``` for seamless use in the current experiment setup.
 
+## Benchmark Dataset
+
+Our benchmark dataset and associated database tabular data can be found on [HuggingFace](https://huggingface.co/datasets/NIH-CARD/BiomedSQL).
+
 ## BigQuery Database Creation
 
 Coming soon we will provide code to create a fresh BigQuery Database from the parquet files available along with the BiomedSQL benchmark on HuggingFace.
