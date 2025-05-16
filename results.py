@@ -3,6 +3,7 @@ import pandas as pd
 from datasets import load_dataset
 
 from utils.plot_utils import token_histogram_plot, sql_category_distribution_plot, sql_category_radar_plots
+from utils.table_utils import baseline_results_table, interaction_results_table, experiment_results_table, compute_results_table
 
 def main():
     full_benchmark_path = 'data/benchmark_data/BiomedSQL.csv'
@@ -45,6 +46,11 @@ def main():
     sql_category_radar_plots(
         benchmark, results_bmsql_o3_mini, results_o3_mini_combo, results_react_o3_mini, results_o3_mini_baseline
     )
+
+    baseline_results_table() 
+    # interaction_results_table() 
+    experiment_results_table()
+    compute_results_table()
 
 if __name__ == '__main__':
     main()
