@@ -1,4 +1,4 @@
-# BiomedSQL: BiomedSQL: A Text-to-SQL Benchmark for Scientific Reasoning on Biomedical Knowledge Bases 
+# BiomedSQL: A Text-to-SQL Benchmark for Scientific Reasoning on Biomedical Knowledge Bases 
 
 ![Alt text](assets/text-to-sql-workflow.png)
 
