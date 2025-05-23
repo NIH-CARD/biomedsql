@@ -93,6 +93,46 @@ def sql_category_distribution_plot(benchmark):
     plt.title("SQL Category Distribution", fontsize=14)
     plt.savefig('results/plots/sql_cat_dist.png')
 
+def bio_category_distribution_plot(benchmark):
+    bio_category_counts = dict()
+
+    for ind, row in benchmark.iterrows():
+        sql_categories = row['bio_category'].split(', ')
+        
+        for sql_cat in sql_categories:
+            if sql_cat not in bio_category_counts:
+                bio_category_counts[sql_cat] = 1
+            else:
+                bio_category_counts[sql_cat] += 1
+
+    print(bio_category_counts) 
+
+    labels = list(bio_category_counts.keys())
+    sizes = list(bio_category_counts.values())
+    explode = [0.1] * len(labels)
+
+    # Plot the pie chart
+    plt.figure(figsize=(12, 6))
+    plt.pie(
+        sizes,
+        colors=plt.cm.Pastel1.colors,
+        labels=labels,
+        autopct='%1.1f%%',
+        startangle=0,
+        pctdistance=0.85,
+        explode=explode,
+        labeldistance=1.1,
+        textprops={'fontsize': 14}
+    )
+
+    centre_circle = plt.Circle((0, 0), 0.75, fc='white')
+    fig = plt.gcf()
+    fig.gca().add_artist(centre_circle)
+
+    # Add title in the center
+    plt.title("Biological Reasoning Category Distribution", fontsize=14)
+    plt.savefig('results/plots/bio_cat_dist.png')
+
 def sql_category_radar_plots(benchmark, bmsql, combo, react, baseline):
     benchmark_needed = benchmark[['uuid','sql_category']]
 

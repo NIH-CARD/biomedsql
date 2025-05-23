@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import chi2_contingency
 
+model_mapping = {
+    'gpt-o3-mini': 'GPT-o3-mini Baseline'
+}
+
 def get_metrics(row):
     uuid = row['uuid']
     split_uuid = uuid.split('.')
@@ -133,9 +137,10 @@ def analyze_results(results, benchmark, model, experiment, plots_dir='results/pl
     metrics['jaccard_p'] = jaccard_p
 
     # plot heatmap
-    sns.heatmap(jaccard_summary, annot=True, fmt="d", cmap="YlGnBu", cbar_kws={'label': 'Count'})
-    plt.xlabel('Jaccard Bins')
-    plt.title(f'{model}')
+    sns.heatmap(jaccard_summary, annot=True, fmt="d", cmap="YlGnBu", annot_kws={'size': 12}, cbar_kws={'label': 'Count'})
+    plt.xlabel('JAC Bins', fontsize=14)
+    plt.ylabel('BioScore', fontsize=14)
+    plt.title(f'{model_mapping.get(model, model)}')
     plt.savefig(f'{plots_dir}/{model}-{experiment}-jaccard-heatmap.png')
     plt.clf()
 
@@ -143,18 +148,20 @@ def analyze_results(results, benchmark, model, experiment, plots_dir='results/pl
     # make jaccard bins
     merge['bins'] = pd.cut(
         merge['ex'],
-        bins=[-0.01, 0.0, 0.5, 1.0 - 1e-9, 1.01],
-        labels=["0", "0 < 0.5", "0.5 < 1", "1"]
+        bins=[-0.01, 0.5, 1.01],
+        labels=["0", "1"]
     )
     ex_summary = merge.groupby(["bioscore", "bins"]).size().unstack(fill_value=0)
     ex_v, ex_p = cramers_v(merge['bins'], merge['bioscore'])
     metrics['ex_v'] = ex_v
     metrics['ex_p'] = ex_p
 
-    sns.heatmap(ex_summary, annot=True, fmt="d", cmap="YlGnBu", cbar_kws={'label': 'Count'})
-    plt.xlabel('Execution Accuracy (EX)')
-    plt.title(f'{model}')
+    sns.heatmap(ex_summary, annot=True, fmt="d", cmap="YlGnBu", annot_kws={'size': 12}, cbar_kws={'label': 'Count'})
+    plt.xlabel('EX', fontsize=14)
+    plt.ylabel('BioScore', fontsize=14)
+    plt.title(f'{model_mapping.get(model, model)}')
     plt.savefig(f'{plots_dir}/{model}-{experiment}-ex-heatmap.png')
+    plt.clf()
 
     results_df = merge.drop(
         columns=['execution_results','gold_exec_results','gold_df','llm_exec_results','llm_df','bins'],

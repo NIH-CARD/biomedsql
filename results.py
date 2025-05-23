@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from datasets import load_dataset
 
-from utils.plot_utils import token_histogram_plot, sql_category_distribution_plot, sql_category_radar_plots
+from utils.plot_utils import token_histogram_plot, sql_category_distribution_plot, bio_category_distribution_plot, sql_category_radar_plots
 from utils.table_utils import baseline_results_table, interaction_results_table, experiment_results_table, compute_results_table
 
 def main():
@@ -37,6 +37,7 @@ def main():
 
     token_histogram_plot(full_benchmark)
     sql_category_distribution_plot(full_benchmark)
+    bio_category_distribution_plot(full_benchmark)
 
     results_bmsql_o3_mini = pd.read_csv('results/experiment_results/bmsql-gpt-o3-mini-baseline-results.csv')
     results_o3_mini_combo = pd.read_csv('results/experiment_results/gpt-o3-mini-combo-results.csv')
