@@ -292,7 +292,7 @@ def main():
                             prompts_dir=prompts_dir,
                             out_dir=results_dir,
                             plots_dir=f'{results_dir}/plots',
-                            rerun=True
+                            rerun=False
                         )
 
                         if model_provider == 'huggingface':
