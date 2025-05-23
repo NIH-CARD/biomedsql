@@ -65,7 +65,7 @@ To run the interaction paradigm experiments for BiomedSQL, run:
 python run_interaction_experiments.py
 ```
 
-## Results
+## Generate Results
 
 To generate results figures and tables after experiments finished, run:
 
