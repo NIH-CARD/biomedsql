@@ -99,7 +99,8 @@ This respository is under the Apache License (Version 2.0). To contribute, simpl
       eprint = {2505.20321},
       archivePrefix = {arXiv},
       primaryClass  = {cs.CL},
-      url    = {https://arxiv.org/abs/2505.20321}, 
+      url    = {https://arxiv.org/abs/2505.20321},
+      code   = {https://github.com/NIH-CARD/biomedsql},
 }
 ```
 
