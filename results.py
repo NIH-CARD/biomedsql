@@ -49,7 +49,7 @@ def main():
     )
 
     baseline_results_table() 
-    # interaction_results_table() 
+    interaction_results_table() 
     experiment_results_table()
     compute_results_table()
 
