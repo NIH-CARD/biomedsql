@@ -4,7 +4,7 @@ import pandas as pd
 def baseline_results_table(results_dir='results/experiment_results', out_dir='results'):
     model_list = [
         'gpt-4o','gpt-4o-mini','gpt-o3-mini','gemini-2.0-flash','gemini-2.0-flash-lite',
-        'claude-3-7-sonnet','Llama-3.1-70B-Instruct','Meta-Llama-3.1-405B-Instruct',
+        'claude-3-7-sonnet-20250219','Llama-3.1-70B-Instruct','Meta-Llama-3.1-405B-Instruct',
         'Qwen2.5-Coder-14B-Instruct','Qwen2.5-Coder-32B-Instruct'
     ]
 
@@ -18,9 +18,10 @@ def baseline_results_table(results_dir='results/experiment_results', out_dir='re
             table_row['EX'] = str(round(model_metrics['ex'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['ex_ci'].iloc[0]*100, 1)) +')'
             table_row['JAC'] = str(round(model_metrics['jaccard_mean'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['jaccard_ci'].iloc[0]*100, 1)) +')'
             table_row['RQR'] = str(round(model_metrics['quality_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['quality_rate_ci'].iloc[0]*100, 1)) +')'
-            table_row['RQR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
+            table_row['SR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
             table_row['SER'] = str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) +')'
             table_row['Tokens'] = str(round(model_metrics['input_tokens_mean'].iloc[0], 0))
+            table_row['Time'] = str(round(model_metrics['total_time_mean'].iloc[0], 1)) + '(' + str(round(model_metrics['total_time_ci'].iloc[0], 1)) +')'
             table.append(table_row)
     
     table_df = pd.DataFrame(table)
@@ -42,9 +43,10 @@ def interaction_results_table(results_dir='results/experiment_results', out_dir=
                 table_row['EX'] = str(round(model_metrics['ex'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['ex_ci'].iloc[0]*100, 1)) +')'
                 table_row['JAC'] = str(round(model_metrics['jaccard_mean'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['jaccard_ci'].iloc[0]*100, 1)) +')'
                 table_row['RQR'] = str(round(model_metrics['quality_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['quality_rate_ci'].iloc[0]*100, 1)) +')'
-                table_row['RQR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
+                table_row['SR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
                 table_row['SER'] = str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) +')'
                 table_row['Tokens'] = str(round(model_metrics['input_tokens_mean'].iloc[0], 0))
+                table_row['Time'] = str(round(model_metrics['total_time_mean'].iloc[0], 1)) + '(' + str(round(model_metrics['total_time_ci'].iloc[0], 1)) +')'
                 table.append(table_row)
     
     table_df = pd.DataFrame(table)
@@ -66,7 +68,7 @@ def experiment_results_table(results_dir='results/experiment_results', model='gp
             table_row['EX'] = str(round(model_metrics['ex'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['ex_ci'].iloc[0]*100, 1)) +')'
             table_row['JAC'] = str(round(model_metrics['jaccard_mean'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['jaccard_ci'].iloc[0]*100, 1)) +')'
             table_row['RQR'] = str(round(model_metrics['quality_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['quality_rate_ci'].iloc[0]*100, 1)) +')'
-            table_row['RQR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
+            table_row['SR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
             table_row['SER'] = str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) +')'
             table_row['Tokens'] = str(round(model_metrics['input_tokens_mean'].iloc[0], 0))
             table.append(table_row)
@@ -90,7 +92,7 @@ def compute_results_table(results_dir='results/experiment_results', interaction=
             table_row['EX'] = str(round(model_metrics['ex'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['ex_ci'].iloc[0]*100, 1)) +')'
             table_row['JAC'] = str(round(model_metrics['jaccard_mean'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['jaccard_ci'].iloc[0]*100, 1)) +')'
             table_row['RQR'] = str(round(model_metrics['quality_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['quality_rate_ci'].iloc[0]*100, 1)) +')'
-            table_row['RQR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
+            table_row['SR'] = str(round(model_metrics['safety_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['safety_rate_ci'].iloc[0]*100, 1)) +')'
             table_row['SER'] = str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) + '(' + str(round(model_metrics['sql_syntax_error_rate'].iloc[0]*100, 1)) +')'
             table_row['Tokens'] = str(round(model_metrics['input_tokens_mean'].iloc[0], 0))
             table.append(table_row)
