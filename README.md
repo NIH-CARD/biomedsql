@@ -90,4 +90,18 @@ On BiomedSQL, GPT-o3-mini is consistently the top-performing model on the variet
 
 This respository is under the Apache License (Version 2.0). To contribute, simply clone the repository and open a pull request!
 
+## Relevant Citation
+```
+@article{koretsky2025biomedsql,
+      title  = {BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases}, 
+      author = {Mathew J. Koretsky and Maya Willey and Adi Asija and Owen Bianchi and Chelsea X. Alvarado and Tanay Nayak and Nicole Kuznetsov and Sungwon Kim and Mike A. Nalls and Daniel Khashabi and Faraz Faghri},
+      year   = {2025},
+      eprint = {2505.20321},
+      archivePrefix = {arXiv},
+      primaryClass  = {cs.CL},
+      url    = {https://arxiv.org/abs/2505.20321},
+      code   = {https://github.com/NIH-CARD/biomedsql},
+}
+```
+
 Happy benchmarking!
