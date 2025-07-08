@@ -1,8 +1,10 @@
 import os
 import gc
 import shutil
+from pathlib import Path
 
-os.makedirs(os.environ.get('HF_HOME', '~/.cache'), exist_ok=True)
+cache_dir = Path(os.environ.get("HF_HOME", ".cache")).expanduser()
+cache_dir.mkdir(parents=True, exist_ok=True)
 
 import torch
 from dataclasses import dataclass
