@@ -88,7 +88,7 @@ On BiomedSQL, GPT-o3-mini is consistently the top-performing model on the variet
 
 ## License and Contributing
 
-This respository is under the Polyform Noncommercial License 1.0.0. To contribute, simply clone the repository and open a pull request!
+This respository is under the Polyform Noncommercial License (Version 1.0.0). To contribute, simply clone the repository and open a pull request!
 
 ## Relevant Citation
 ```
