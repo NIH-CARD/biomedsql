@@ -1,7 +1,6 @@
 import os
-import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr
+from scipy.stats import pearsonr
 from utils.analysis_utils import sql_error_analysis
 
 
@@ -131,3 +130,33 @@ def error_analysis_table(benchmark_path='data/benchmark_data/dev_sample.csv', ou
     df[int_cols] = df[int_cols].astype(int)
 
     df.to_csv(f'{out_dir}/error_analysis.csv', index=False)
+
+
+def bioscore_comparison_table(path='analyst_graded_bioscores.csv', out_dir='results'):
+    """
+    Build a comparison table of domain expert vs GPT-4o BioScore distributions
+    and compute the Spearman correlation between them.
+
+    Expects a CSV with columns: model_score, analyst_score.
+    Returns (table_df, spearman_r, p_value).
+    """
+    df = pd.read_csv(path)
+    df['analyst_score'] = df['analyst_score'].round(1)
+    df['model_score'] = df['model_score'].round(1)
+
+    expert_counts = df['analyst_score'].value_counts()
+    model_counts = df['model_score'].value_counts()
+
+    all_scores = sorted(set(expert_counts.index) | set(model_counts.index))
+    table = pd.DataFrame({
+        'BioScore':      all_scores,
+        'Domain Expert': [int(expert_counts.get(s, 0)) for s in all_scores],
+        'GPT-4o':        [int(model_counts.get(s, 0)) for s in all_scores],
+    })
+
+    result = pearsonr(df['model_score'], df['analyst_score'])
+    r, p = result.statistic, result.pvalue
+    ci = result.confidence_interval(confidence_level=0.95)
+    print(f"Pearson r = {r:.4f}, p = {p:.4g}, 95% CI: ({ci.low:.4f}, {ci.high:.4f})")
+
+    table.to_csv(f'{out_dir}/bioscore_comparison.csv', index=False)

@@ -64,8 +64,6 @@ def sql_category_distribution_plot(benchmark):
             else:
                 sql_category_counts[sql_cat] += 1
 
-    print(sql_category_counts) 
-
     labels = list(sql_category_counts.keys())
     sizes = list(sql_category_counts.values())
     explode = [0.1] * len(labels)
@@ -103,8 +101,6 @@ def bio_category_distribution_plot(benchmark):
                 bio_category_counts[sql_cat] = 1
             else:
                 bio_category_counts[sql_cat] += 1
-
-    print(bio_category_counts) 
 
     labels = list(bio_category_counts.keys())
     sizes = list(bio_category_counts.values())
