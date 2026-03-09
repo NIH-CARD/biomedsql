@@ -39,9 +39,11 @@ Our benchmark dataset and associated database tabular data can be found on [Hugg
 
 ## BigQuery Database Creation
 
-Coming soon we will provide code to create a fresh BigQuery Database from the parquet files available along with the BiomedSQL benchmark on HuggingFace.
+To create the BigQuery database from the tabular data hosted on HuggingFace, run:
 
-Reviewers will be provided with a pre-configured ```config/service_account.json``` file for access to the current database.
+```create bigquery database
+python create_database.py
+```
 
 ## LLM Experiments
 

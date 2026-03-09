@@ -192,7 +192,7 @@ def main():
         elif eval_model_provider == 'gemini':
             llm_eval_handler = GeminiLLM(GEMINI_CLIENT)
         else:
-            raise ValueError(f'Invalid LLM Provider Passed: {model_provider}')
+            raise ValueError(f'Invalid LLM Provider Passed: {eval_model_provider}')
 
         if len(experiments) > 0 and len(experiment_models) > 0:
             for model in experiment_models:
@@ -203,13 +203,13 @@ def main():
                 if model_interaction == 'bmsql':
                     table_info_concise = create_table_info(
                         bq_handler=bq_handler,
-                        dataset_id='bio_sql_benchmark',
+                        dataset_id=os.environ['DATASET_NAME'],
                         num_rows=0
                     )
 
                     table_info = create_table_info(
                         bq_handler=bq_handler,
-                        dataset_id='bio_sql_benchmark',
+                        dataset_id=os.environ['DATASET_NAME'],
                         num_rows=5
                     )
 

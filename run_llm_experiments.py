@@ -17,7 +17,7 @@ from handlers.llms.gemini_llm import GeminiLLM
 from handlers.llms.anthropic_llm import AnthropicLLM
 from utils.experiments_utils import (
     create_table_info, read_prompts, generate_sql, parse_sql_query,
-    run_sql, generate_answer, bioscore_components, get_examples, get_thresholds, get_verbose_thresholds
+    run_sql, generate_answer, bioscore_components, get_examples, get_thresholds
 )
 from utils.analysis_utils import analyze_results
 
@@ -222,7 +222,7 @@ def main():
         elif eval_model_provider == 'gemini':
             llm_eval_handler = GeminiLLM(GEMINI_CLIENT)
         else:
-            raise ValueError(f'Invalid LLM Provider Passed: {model_provider}')
+            raise ValueError(f'Invalid LLM Provider Passed: {eval_model_provider}')
 
         if len(experiments) > 0 and len(experiment_models) > 0:
             for model in experiment_models:
@@ -273,7 +273,7 @@ def main():
 
                         schema = create_table_info(
                             bq_handler=bq_handler,
-                            dataset_id='bio_sql_benchmark',
+                            dataset_id=os.environ['DATASET_NAME'],
                             num_rows=num_rows
                         )
                         

@@ -27,8 +27,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Constants
-PROJECT_ID = "card-ai-389220"  # Biomedical dataset project
-DATASET_NAME = "bio_sql_benchmark"  # Biomedical benchmark dataset
+PROJECT_ID = os.environ["PROJECT_ID"]
+DATASET_NAME = os.environ["DATASET_NAME"]
 QUERY_LIMIT = 10  # Limit for query results
 MAX_RETRIES = 5
 
