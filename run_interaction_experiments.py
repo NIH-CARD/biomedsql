@@ -9,9 +9,10 @@ from datasets import load_dataset
 from handlers.gcp import BQ_CLIENT
 from handlers.gcp.big_query import BigQuery
 
-from handlers.llms import AZURE_CLIENT, GEMINI_CLIENT
+from handlers.llms import AZURE_CLIENT, GEMINI_CLIENT, ANTHROPIC_CLIENT
 from handlers.llms.azure_openai_llm import AzureOpenAILLM
 from handlers.llms.gemini_llm import GeminiLLM
+from handlers.llms.anthropic_llm import AnthropicLLM
 
 from handlers.sql.sql_handlers import SQLHandler
 from handlers.sql.sql_agent import SQLAgent
@@ -219,6 +220,15 @@ def main():
                             'temperature': 0
                         }
                         llm = GeminiLLM(GEMINI_CLIENT)
+
+                    elif model_name == 'claude-3-7-sonnet-20250219':
+                        llm_query_params = {
+                            'model': model_name,
+                            'max_tokens': 4096,
+                            'temperature': 0
+                        }
+                        llm = AnthropicLLM(ANTHROPIC_CLIENT)
+
                     else:
                         llm_query_params = {
                             'model': AZURE_OPENAI_MODEL_MAPPING.get(model_name, 'gpt-4o'),

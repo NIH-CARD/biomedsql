@@ -139,3 +139,22 @@ class BigQuery(ABC):
         except Exception as e:
             print(f'Error running query to sample {num_rows }rows from {table_id}: {e}')
             return None
+        
+    def dry_run_query(self, query: str) -> bool:
+        """
+        Perform a BigQuery dry‑run to validate SQL without incurring execution cost.
+
+        Parameters:
+        - query (str): SQL query to validate.
+
+        Returns:
+        - bool: True if the query is syntactically valid and references existing
+                tables/columns in the project; False otherwise.
+        """
+        try:
+            job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
+            self.bigquery_client.query(query, job_config=job_config).result()
+            return True
+        except Exception as e:
+            print(f'Dry‑run failed for query: {e}')
+            return False

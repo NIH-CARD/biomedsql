@@ -17,14 +17,14 @@ from handlers.llms.gemini_llm import GeminiLLM
 from handlers.llms.anthropic_llm import AnthropicLLM
 from utils.experiments_utils import (
     create_table_info, read_prompts, generate_sql, parse_sql_query,
-    run_sql, generate_answer, bioscore_components, get_examples, get_thresholds
+    run_sql, generate_answer, bioscore_components, get_examples, get_thresholds, get_verbose_thresholds
 )
 from utils.analysis_utils import analyze_results
 
 AZURE_OPENAI_MODEL_MAPPING = {
     'gpt-4o': os.environ["AZURE_OPENAI_GPT_4o"],
-    'gpt-4o-mini': os.environ["AZURE_OPENAI_GPT_4o_mini"],
-    'gpt-o3-mini': os.environ["AZURE_OPENAI_GPT_o3_mini"]
+    'gpt-o3-mini': os.environ["AZURE_OPENAI_GPT_o3_mini"],
+    'gpt-5.2': os.environ["AZURE_OPENAI_GPT_5_2"]
 }
 
 AZURE_AI_MODEL_MAPPING = {
@@ -292,7 +292,7 @@ def main():
                             prompts_dir=prompts_dir,
                             out_dir=results_dir,
                             plots_dir=f'{results_dir}/plots',
-                            rerun=False
+                            rerun=True
                         )
 
                         if model_provider == 'huggingface':

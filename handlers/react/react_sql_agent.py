@@ -87,7 +87,7 @@ class ReACTSQLAgent:
         4. Verify the query syntax before executing
         5. If the query has errors, fix them and try again
         6. Once the query is successful, explain the results clearly
-        7. Always include the UUID column in your SELECT statements, except in cases of questions where the COUNT and ORDER BY functions are needed.
+        7. Always include the UUID column in your SELECT statements, except in cases of questions where the COUNT and GROUP BY functions are needed.
         8. Unless the user explicitly requests a different LIMIT, default your queries to LIMIT 100.
         9. Avoid SELECT *; select only the necessary columns to answer the user’s query.
         10. Ensure that any disease names that contain an apostrophe in the query are surrounded by double quotes (e.g., "Alzheimer's Disease").

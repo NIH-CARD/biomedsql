@@ -43,6 +43,11 @@ class GeminiLLM(BaseLLM):
             raise ValueError("LLM Client is missing.")
 
         try:
+            thinking_cfg = None
+            if model_name == 'gemini-3-pro-preview':
+                thinking_cfg = genai.types.ThinkingConfig(thinking_budget=1024)
+                temperature = 1.0
+            
             config = genai.types.GenerateContentConfig(
                 max_output_tokens=max_tokens,
                 temperature=temperature,
@@ -58,7 +63,8 @@ class GeminiLLM(BaseLLM):
                     ),genai.types.SafetySetting(
                     category="HARM_CATEGORY_HARASSMENT",
                     threshold="OFF"
-                )]
+                )],
+                thinking_config=thinking_cfg
             )
 
             response = self.llm_client.models.generate_content(

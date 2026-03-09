@@ -63,6 +63,17 @@ class AzureOpenAILLM(BaseLLM):
                         {"role": "user", "content": query_text}
                     ]
                 )
+
+            elif 'gpt-5.2' in model_name:
+                chat_completion = self.llm_client.chat.completions.create(
+                    model=model_name,
+                    reasoning_effort='low',
+                    temperature=1.0,
+                    messages=[
+                        {"role": "user", "content": query_text}
+                    ]
+                )
+
             else:
                 chat_completion = self.llm_client.chat.completions.create(
                     model=model_name,
