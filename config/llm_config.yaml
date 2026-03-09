@@ -68,7 +68,7 @@ experiments:
     num_rows: 0
     num_examples: 40
     thresholds: False
-  - name: "stat-instruct"
+  - name: "threshold"
     num_rows: 0
     num_examples: 0
     thresholds: True

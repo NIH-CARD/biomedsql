@@ -1,4 +1,3 @@
-import os
 import tiktoken
 import numpy as np
 import pandas as pd
@@ -251,5 +250,3 @@ def sql_category_radar_plots(benchmark, bmsql, combo, react, baseline):
     ax.grid(True, color='lightgray')
     plt.tight_layout()
     plt.savefig('results/plots/sql_rqr.png')
-
-
