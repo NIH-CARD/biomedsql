@@ -18,8 +18,6 @@ Then install all dependencies:
 uv sync
 ```
 
-> **Note:** If you do not have GPUs available, you can skip the HuggingFace local model dependencies (`torch`, `transformers`, `sentence-transformers`) by commenting out any models with `provider: huggingface` in `config/llm_config.yaml` before running experiments.
-
 ## Environment Setup
 
 BiomedSQL requires the extensive use of both opened a closed source LLMs. The following services are needed to run the full set of experiments:
