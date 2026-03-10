@@ -1,265 +1,265 @@
 Below are example BigQuery queries to guide you (for reference only, do not repeat verbatim unless needed by the user’s request):
 Example 1:
     SELECT DISTINCT UUID, drugName, drugIsApproved, newLinkedTargets_string, maxClinicalTrialPhase
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE newLinkedTargets_string LIKE "%TUBB %"
     ORDER BY maxClinicalTrialPhase DESC
     LIMIT 100
 
 Example 2:
     SELECT UUID, SNP, A1 AS effect_allele, freq AS effect_allele_frequency, A2 AS non_effect_allele, 1-freq AS non_effect_allele_frequency
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
     WHERE SNP = "rs12206095"
     LIMIT 100
 
 Example 3:
     SELECT DISTINCT UUID, drugName, tradeNames_list, syns_list, target, approvedSymbol, approvedName, mesh_heading, efo_term, yearOfFirstApproval, max_phase_for_ind
-    FROM `card-ai-389220.bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
+    FROM `bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
     WHERE (LOWER(drugName) LIKE "%rotigotine%" OR LOWER(tradeNames_list) LIKE "%rotigotine%" OR LOWER(syns_list) LIKE "%rotigotine%") AND (LOWER(mesh_heading) LIKE "%alzheimer%" OR LOWER(efo_term) LIKE "%alzheimer%")
     ORDER BY max_phase_for_ind DESC
     LIMIT 100
 
 Example 4:
     SELECT DISTINCT UUID, drugName, tradeNames_list, syns_list, target, approvedSymbol, approvedName, mesh_heading, efo_term, yearOfFirstApproval, max_phase_for_ind
-    FROM `card-ai-389220.bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
+    FROM `bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
     WHERE (LOWER(drugName) LIKE "%rotigotine%" OR LOWER(tradeNames_list) LIKE "%rotigotine%" OR LOWER(syns_list) LIKE "%rotigotine%") AND (LOWER(mesh_heading) LIKE "%alzheimer%" OR LOWER(efo_term) LIKE "%alzheimer%")
     ORDER BY max_phase_for_ind DESC
     LIMIT 100
 
 Example 5:
     SELECT DISTINCT UUID, drugName, tradeNames_string, drugSynonyms_string
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%vinblastine sulfate%" OR LOWER(tradeNames_string) LIKE "%vinblastine sulfate%" OR LOWER(drugSynonyms_string) LIKE "%vinblastine sulfate%")
     LIMIT 100
 
 Example 6:
     SELECT DISTINCT UUID, drugName, tradeNames_string, drugSynonyms_string, linkedDiseasesDrug_string, yearOfFirstApproval, maxClinicalTrialPhase, drugIsApproved, newLinkedTargets_string, numberLinkedTargets
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%ocaliva%" OR LOWER(tradeNames_string) LIKE "%ocaliva%" OR LOWER(drugSynonyms_string) LIKE "%ocaliva%")
     ORDER  BY maxClinicalTrialPhase DESC
     LIMIT 100
 
 Example 7
     SELECT UUID, topRSID, Disease, Omic_tissue, p_SMR_multi, p_HEIDI, A1, A2, Freq, func_sig
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
     WHERE Disease = 'AD' AND LOWER(Omic_tissue) = 'caudate basal ganglia' AND p_SMR_multi < 2.95e-6 AND p_HEIDI > 0.01
     ORDER BY p_SMR_multi
     LIMIT 1
 
 Example 8
     SELECT UUID, tradeNames_string, drugName, drugMolecularType, drugActionType, drugMechanismOfAction, linkedDiseasesDrug_string, newLinkedTargets_string, maxClinicalTrialPhase, yearOfFirstApproval, drugIsApproved
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%aplenzin%" OR LOWER(tradeNames_string) LIKE "%aplenzin%" OR LOWER(drugSynonyms_string) LIKE "%aplenzin%")
     LIMIT 100
 
 Example 9
     SELECT UUID, SNP, b
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
     WHERE SNP = "rs112485576"
     LIMIT 100
 
 Example 10
     SELECT chr_38, COUNT(DISTINCT SNP) AS unique_snp_count
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
     WHERE chr_38 = 10 AND p < 5e-8
     GROUP BY chr_38
     LIMIT 1
 
 Example 11
     SELECT DISTINCT UUID, drugName, tradeNames_list, syns_list, yearOfFirstApproval, max_phase_for_ind, mesh_heading, efo_term, approvedSymbol, approvedName
-    FROM `card-ai-389220.bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
+    FROM `bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
     WHERE (LOWER(mesh_heading) LIKE "%parkinson%" OR LOWER(efo_term) LIKE "%parkinson%") AND (LOWER(drugName) LIKE "%levodopa%" OR LOWER(tradeNames_list) LIKE "%levodopa%" OR LOWER(syns_list) LIKE "%levodopa%")
     ORDER BY max_phase_for_ind DESC
     LIMIT 100
 
 Example 12
     SELECT UUID, Gene, Omic_tissue, topSNP, A1, A2, Freq, p_SMR_multi, Disease, b_SMR, p_HEIDI
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
     WHERE Gene = 'CHRM3' AND Disease = 'AD' AND p_SMR_multi < 2.95e-6 AND b_SMR > 0
     ORDER BY p_SMR_multi
     LIMIT 100
 
 Example 13
     SELECT UUID, SNP, p, b, nearestGene 
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
     WHERE nearestGene LIKE '%PSMF1%' AND p<5e-8
     ORDER BY p
     LIMIT 100
 
 Example 14
     SELECT UUID, topRSID, Disease, Gene, p_SMR_multi, p_HEIDI, Omic_tissue, Omic_type
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
     WHERE Disease = 'PD' AND Gene = 'SNCA' AND LOWER(Omic_type) LIKE "%whole blood eqtl%" AND p_SMR_multi < 2.95e-6 AND p_HEIDI > 0.01
     ORDER BY p_SMR_multi
     LIMIT 1
 
 Example 15
     SELECT DISTINCT UUID, drugName, drugMolecularType, newLinkedTargets_string, numberLinkedTargets, yearOfFirstApproval, maxClinicalTrialPhase, drugIsApproved
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%sontuzumab%" OR LOWER(tradeNames_string) LIKE "%sontuzumab%" OR LOWER(drugSynonyms_string) LIKE "%sontuzumab%")
     ORDER BY maxClinicalTrialPhase DESC
     LIMIT 100
 
 Example 16
     SELECT UUID, drugName, drugSynonyms_string, tradeNames_string, chemblIdentifier
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%naminidil%" OR LOWER(tradeNames_string) LIKE "%naminidil%" OR LOWER(drugSynonyms_string) LIKE "%naminidil%")
     LIMIT 100
 
 Example 17
     SELECT UUID, topRSID, Disease, Gene, p_SMR_multi, p_HEIDI, Omic_tissue, Omic_type, func_sig
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full` 
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full` 
     WHERE Gene = "EMID2" AND Disease = "LBD" AND LOWER(Omic_type) LIKE "%whole brain eqtl%"
     ORDER BY p_SMR_multi
     LIMIT 100
 
 Example 18
     SELECT DISTINCT UUID, drugName, tradeNames_list, syns_list, mesh_heading, efo_term, yearOfFirstApproval, max_phase_for_ind 
-    FROM `card-ai-389220.bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
+    FROM `bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
     WHERE (LOWER(drugName) LIKE "%rotigotine%" OR LOWER(tradeNames_list) LIKE "%rotigotine%" OR LOWER(syns_list) LIKE "%rotigotine%")
     ORDER BY max_phase_for_ind DESC
     LIMIT 100
 
 Example 19
     SELECT DISTINCT UUID, drugName, tradeNames_string, drugSynonyms_string, yearOfFirstApproval, maxClinicalTrialPhase, drugIsApproved
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%vinblastine sulfate%" OR LOWER(tradeNames_string) LIKE "%vinblastine sulfate%" OR LOWER(drugSynonyms_string) LIKE "%vinblastine sulfate%")
     ORDER BY maxClinicalTrialPhase DESC
     LIMIT 100
 
 Example 20
     SELECT DISTINCT UUID, drugName, blackBoxWarning
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%brentuximab vedotin%" OR LOWER(tradeNames_string) LIKE "%brentuximab vedotin%" OR LOWER(drugSynonyms_string) LIKE "%brentuximab vedotin%")
     LIMIT 100
 
 Example 21
     SELECT UUID, drugName, tradeNames_string, drugMechanismOfAction
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%brentuximab vedotin%" OR LOWER(tradeNames_string) LIKE "%brentuximab vedotin%" OR LOWER(drugSynonyms_string) LIKE "%brentuximab vedotin%")
     LIMIT 100
 
 Example 22
     SELECT UUID, topRSID, Disease, Gene, p_SMR_multi, p_HEIDI
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
     WHERE Disease = 'AD' AND Gene = 'ADAM10' AND p_SMR_multi < 2.95e-6
     ORDER BY p_SMR_multi
     LIMIT 100
 
 Example 23
     SELECT UUID, SNP, p, b 
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe` 
     WHERE nearestGene LIKE "%GBA%"
     ORDER BY p
     LIMIT 100
 
 Example 24
     SELECT UUID, topRSID, Disease, Gene, p_SMR_multi, p_HEIDI, b_SMR
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
     WHERE Disease = 'AD' AND Gene = 'TREM2' AND p_SMR_multi < 2.95e-6
     LIMIT 100
 
 Example 25
     SELECT DISTINCT UUID, drugName, drugMolecularType, newLinkedTargets_string, yearOfFirstApproval, maxClinicalTrialPhase, drugIsApproved 
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%bectumomab%" OR LOWER(tradeNames_string) LIKE "%bectumomab%" OR LOWER(drugSynonyms_string) LIKE "%bectumomab%") 
     ORDER BY maxClinicalTrialPhase DESC
     LIMIT 100
 
 Example 26
     SELECT DISTINCT UUID, drugName, drugSynonyms_string, tradeNames_string, yearOfFirstApproval, maxClinicalTrialPhase
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%halothane%" OR LOWER(tradeNames_string) LIKE "%halothane%" OR LOWER(drugSynonyms_string) LIKE "%halothane%") 
     ORDER BY maxClinicalTrialPhase desc
     LIMIT 100
 
 Example 27
     SELECT DISTINCT UUID, drugName, drugSynonyms_string, tradeNames_string, drugMolecularType, drugActionType
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%halothane%" OR LOWER(tradeNames_string) LIKE "%halothane%" OR LOWER(drugSynonyms_string) LIKE "%halothane%")
     LIMIT 100
 
 Example 28
     SELECT DISTINCT UUID, drugName, syns_list, tradeNames_list, patent_no
-    FROM `card-ai-389220.bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
+    FROM `bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses` 
     WHERE (LOWER(drugName) LIKE "%sonidegib phosphate%" OR LOWER(tradeNames_list) LIKE "%sonidegib phosphate%" OR LOWER(syns_list) LIKE "%sonidegib phosphate%")
     LIMIT 1000
 
 Example 29
     SELECT UUID, SNP, A1 AS effect_allele, freq AS effect_allele_frequency, A2 AS non_effect_allele, 1 - freq AS non_effect_allele_frequency
-    FROM `card-ai-389220.bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
+    FROM `bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
     WHERE SNP = 'rs61769339'
     LIMIT 1
 
 Example 30
     SELECT DISTINCT UUID, drugName, newLinkedTargets_string, drugIsApproved, maxClinicalTrialPhase
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE newLinkedTargets_string LIKE '%ACACA %'
     ORDER BY maxClinicalTrialPhase DESC
     LIMIT 100
 
 Example 31
     SELECT DISTINCT UUID, Gene, topRSID, p_GWAS, b_GWAS
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
     WHERE Disease = 'AD' AND Gene = 'CR1' AND p_GWAS < 5e-8
     ORDER BY p_GWAS
     LIMIT 100
 
 Example 32
     SELECT UUID, Gene, topRSID, p_SMR_multi, Omic_tissue, p_HEIDI
-    FROM `card-ai-389220.bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
+    FROM `bio_sql_benchmark.NeurodegenerativeDiseases_SMR_Genes_Full`
     WHERE Disease = 'AD' AND Gene = 'CR1' AND p_SMR_multi < 2.95e-6
     ORDER BY p_SMR_multi
     LIMIT 100
 
 Example 33
     SELECT DISTINCT UUID, drugMechanismOfAction
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE(LOWER(drugName) LIKE "%testosterone enanthate%" OR LOWER(tradeNames_string) LIKE "%testosterone enanthate%" OR LOWER(drugSynonyms_string) LIKE "%testosterone enanthate%")
     LIMIT 100
 
 Example 34
     SELECT DISTINCT UUID, drugName, tradeNames_string, drugSynonyms_string, yearOfFirstApproval, maxClinicalTrialPhase, drugIsApproved
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE (LOWER(drugName) LIKE "%escitalopram%" OR LOWER(tradeNames_string) LIKE "%escitalopram%" OR LOWER(drugSynonyms_string) LIKE "%escitalopram%") AND drugIsApproved = True
     LIMIT 100
 
 Example 35
     SELECT DISTINCT UUID, drugName, tradeNames_list, drugType, actionType, target, approvedSymbol, approvedName, yearOfFirstApproval, max_phase_for_ind, mesh_heading, efo_term
-    FROM `card-ai-389220.bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses`
+    FROM `bio_sql_benchmark.DrugTargets_IndicationsAndTherapeuticUses`
     WHERE (LOWER(efo_term) = "amyloidosis" OR LOWER(mesh_heading) = "amyloidosis") AND LOWER(drugType) = "oligonucleotide" AND yearOfFirstApproval > 0 AND max_phase_for_ind = 4.0
     LIMIT 100
 
 Example 36
     SELECT UUID, SNP, p, b
-    FROM `card-ai-389220.bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID` 
+    FROM `bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID` 
     WHERE SNP = 'rs12032182'
     ORDER BY p
     LIMIT 1
 
 Example 37
     SELECT 'AlzheimerDisease_CombinedGeneData_UUID' AS source_table, UUID, SNP, chr_38, bp_38, nearestGene
-    FROM `card-ai-389220.bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
+    FROM `bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
     WHERE SNP = 'rs3738435'
     UNION ALL
     SELECT 'ParkinsonDisease_CompleteGeneData_No23andMe' AS source_table, UUID, SNP, chr_38, bp_38, nearestGene
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
     WHERE SNP = 'rs3738435'
     LIMIT 100
 
 Example 38
     SELECT 'AlzheimerDisease_CombinedGeneData_UUID' AS source_table, UUID, nearestGene
-    FROM `card-ai-389220.bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
+    FROM `bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
     WHERE SNP = 'rs12483639'
     UNION ALL
     SELECT 'ParkinsonDisease_CompleteGeneData_No23andMe' AS source_table, UUID, nearestGene
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
     WHERE SNP = 'rs12483639'
     LIMIT 100
 
 Example 39
     SELECT drugActionType, COUNT(*) AS actionTypeCount
-    FROM `card-ai-389220.bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
+    FROM `bio_sql_benchmark.DrugGeneTargets_ComprehensiveAnnotations_updated`
     WHERE LOWER(drugMolecularType) = 'antibody'
     GROUP BY drugActionType
     ORDER BY actionTypeCount DESC
@@ -267,10 +267,10 @@ Example 39
 
 Example 40
     SELECT 'AlzheimerDisease_CombinedGeneData_UUID' AS source_table, UUID, SNP, chr_38, bp_38, chr_37, bp_37
-    FROM `card-ai-389220.bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
+    FROM `bio_sql_benchmark.AlzheimerDisease_CombinedGeneData_UUID`
     WHERE SNP = 'rs73098609'
     UNION ALL
     SELECT 'ParkinsonDisease_CompleteGeneData_No23andMe' AS source_table, UUID, SNP, chr_38, bp_38, chr_37, bp_37
-    FROM `card-ai-389220.bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
+    FROM `bio_sql_benchmark.ParkinsonDisease_CompleteGeneData_No23andMe`
     WHERE SNP = 'rs73098609'
     LIMIT 100
