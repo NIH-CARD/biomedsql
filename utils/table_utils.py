@@ -81,18 +81,6 @@ def compute_results_table(results_dir='results/experiment_results', interaction=
     pd.DataFrame(table).to_csv(f'{out_dir}/{interaction}-{model}_compute_results.csv', index=None)
 
 
-def big_schema_results_table(results_dir='results/experiment_results', out_dir='results'):
-    model_list = ['gpt-o3-mini-baseline', 'gpt-o3-mini-combo', 'bmsql-gpt-o3-mini-baseline']
-
-    table = []
-    for model in model_list:
-        path = f'{results_dir}/{model}-big-schema-metrics.csv'
-        if os.path.isfile(path):
-            table.append(_metric_row(pd.read_csv(path), model))
-
-    pd.DataFrame(table).to_csv(f'{out_dir}/big_schema_results.csv', index=None)
-
-
 def error_analysis_table(benchmark_path='data/benchmark_data/dev_sample.csv', out_dir='results'):
     """
     Run SQL error classification across experiments and save a formatted table.
