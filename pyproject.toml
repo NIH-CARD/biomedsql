@@ -1,0 +1,61 @@
+[project]
+name = "biomedsql"
+version = "0.1.0"
+description = "BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases"
+requires-python = ">=3.10"
+
+dependencies = [
+    # LLM providers
+    "anthropic>=0.51.0",
+    "openai>=1.78.1",
+    "azure-ai-inference>=1.0.0b9",
+    "google-genai>=1.15.0",
+    "google-cloud-aiplatform>=1.92.0",   # provides vertexai
+
+    # Google Cloud
+    "google-auth>=2.40.1",
+    "google-cloud-bigquery>=3.32.0",
+    "google-cloud-storage>=2.19.0",
+
+    # LangChain integrations (used in LlamaIndex embeddings)
+    "langchain-openai>=0.3.16",
+    "langchain-google-genai>=2.1.4",
+
+    # LlamaIndex
+    "llama-index-core>=0.12.35",
+    "llama-index-llms-openai>=0.3.38",
+    "llama-index-llms-google-genai>=0.1.12",
+    "llama-index-embeddings-langchain>=0.3.0",
+
+    # HuggingFace (local models — requires GPU; comment out if not needed)
+    "transformers>=4.51.3",
+    "torch>=2.7.0",
+    "huggingface-hub>=0.31.2",
+    "datasets>=3.6.0",
+    "sentence-transformers>=2.0.0",
+
+    # Data / SQL
+    "pandas>=2.2.3",
+    "numpy>=2.2.5",
+    "sqlalchemy>=2.0.41",
+    "sqlglot>=25.0.0",
+    "sqlparse>=0.5.0",
+    "scipy>=1.15.3",
+
+    # Plotting
+    "matplotlib>=3.10.3",
+    "seaborn>=0.13.2",
+
+    # Utilities
+    "python-dotenv>=1.1.0",
+    "pyyaml>=6.0.2",
+    "pydantic>=2.11.4",
+    "tiktoken>=0.9.0",
+    "tabulate>=0.9.0",
+    "httpx>=0.28.1",
+    "typeguard>=4.4.2",
+    "tqdm>=4.67.1",
+]
+
+[tool.uv]
+package = false

@@ -23,8 +23,8 @@ from utils.analysis_utils import analyze_results
 
 AZURE_OPENAI_MODEL_MAPPING = {
     'gpt-4o': os.environ["AZURE_OPENAI_GPT_4o"],
-    'gpt-4o-mini': os.environ["AZURE_OPENAI_GPT_4o_mini"],
-    'gpt-o3-mini': os.environ["AZURE_OPENAI_GPT_o3_mini"]
+    'gpt-o3-mini': os.environ["AZURE_OPENAI_GPT_o3_mini"],
+    'gpt-5.2': os.environ["AZURE_OPENAI_GPT_5_2"]
 }
 
 AZURE_AI_MODEL_MAPPING = {
@@ -222,7 +222,7 @@ def main():
         elif eval_model_provider == 'gemini':
             llm_eval_handler = GeminiLLM(GEMINI_CLIENT)
         else:
-            raise ValueError(f'Invalid LLM Provider Passed: {model_provider}')
+            raise ValueError(f'Invalid LLM Provider Passed: {eval_model_provider}')
 
         if len(experiments) > 0 and len(experiment_models) > 0:
             for model in experiment_models:
@@ -273,7 +273,7 @@ def main():
 
                         schema = create_table_info(
                             bq_handler=bq_handler,
-                            dataset_id='bio_sql_benchmark',
+                            dataset_id=os.environ['DATASET_NAME'],
                             num_rows=num_rows
                         )
                         
@@ -292,7 +292,7 @@ def main():
                             prompts_dir=prompts_dir,
                             out_dir=results_dir,
                             plots_dir=f'{results_dir}/plots',
-                            rerun=False
+                            rerun=True
                         )
 
                         if model_provider == 'huggingface':

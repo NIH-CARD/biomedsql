@@ -1,280 +1,108 @@
 import ast
-import os
+import re
+from collections import Counter
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sqlglot
+from sqlglot import expressions as exp
 from scipy.stats import chi2_contingency
 
 model_mapping = {
     'gpt-o3-mini': 'GPT-o3-mini Baseline'
 }
 
-def get_metrics(row):
-    uuid = row['uuid']
-    split_uuid = uuid.split('.')
+_UUID_PREFIXES = [
+    "PDno23andme_full_gene_notext",
+    "DrugGeneTargets_v2",
+    "DrugTargetsIndication121923_text",
+    "NDD_SMR_genes_all_update_text",
+    "AD_combo_gene_notext_UUID",
+    "AlzheimerDisease_GeneAssoc_UUID",
+    "DrugTargets_LiscensingAndUses",
+    "DrugTargets_UsesAndDosages",
+    "NeurodegenerativeDisease_AlleleFrequencies",
+    "ParkinsonDisease_GeneAssoc_UUID",
+]
 
-    returned_rows = row["llm_df"].shape[0]
 
-    # For questions where gold query returns a count, lets only look at the meaningful numeric values
-    if split_uuid[0] == 'Q26':
-        gold_ids = set()
-        gold_ids.add([int(x) for x in row['gold_df'].values.ravel() if str(x).isdigit()][-1])
-        test_ids = set([int(x) for x in row['llm_df'].values.ravel() if str(x).isdigit])
-    elif split_uuid[0] == 'Q71':
-        gold_ids = set([int(x) for x in list(row['gold_df'].values.ravel()) if str(x).isdigit()])
-        test_ids = set([int(x) for x in list(row['llm_df'].values.ravel()) if str(x).isdigit()])
-    else:
-        gold_ids = set(row["gold_df"].get("UUID", []))
-        test_ids = set(row["llm_df"].get("UUID", []))
+def find_uuid_in_row(row):
+    """Return the first value in a DataFrame row that starts with a known UUID prefix."""
+    for val in row:
+        if isinstance(val, str):
+            for prefix in _UUID_PREFIXES:
+                if val.startswith(prefix):
+                    return val
+    return None
 
-    if row['sql_ran'] == 0:
-        ex = 0
-    elif gold_ids == test_ids:
-        ex = 1
-    else:
-        ex = 0
 
-    if row['sql_ran'] == 0:
-        jaccard = 0
-        intersection = 0
-        union = len(list(gold_ids))
-    else:
-        intersection = len(list(gold_ids & test_ids))
-        union = len(list(gold_ids | test_ids))
-        jaccard = intersection / union if union > 0 else 1
+# ── Confidence interval helpers ───────────────────────────────────────────────
 
-    return pd.Series({
-        "ex": ex,
-        "jaccard": jaccard,
-        "rows": returned_rows
+def _prop_ci(p, n):
+    return 1.96 * np.sqrt(p * (1 - p) / n) if (not np.isnan(p) and n > 0) else np.nan
+
+def _mean_ci(series):
+    return 1.96 * (series.std() / np.sqrt(len(series)))
+
+
+# ── Shared metric blocks ──────────────────────────────────────────────────────
+
+def _add_bioscore_metrics(metrics, results):
+    results['bioscore_norm'] = np.where(results['bioscore'] != -1, results['bioscore'] / 3, results['bioscore'])
+    n = len(results)
+    idk = (results['bioscore_norm'] == -1).sum()
+    bad = ((results['bioscore_norm'] < 2/3) & (results['bioscore_norm'] != -1)).sum()
+    good = (results['bioscore_norm'] >= 2/3).sum()
+
+    safety = idk / (idk + bad) if (idk + bad) > 0 else np.nan
+    quality = good / n if n > 0 else np.nan
+    metrics['safety_rate'] = safety
+    metrics['safety_rate_ci'] = _prop_ci(safety, n)
+    metrics['quality_rate'] = quality
+    metrics['quality_rate_ci'] = _prop_ci(quality, n)
+
+
+def _add_exec_metrics(metrics, merge):
+    n = len(merge)
+    jm, em, rm = merge['jaccard'].mean(), merge['ex'].mean(), merge['rows'].mean()
+    metrics.update({
+        'jaccard_mean': jm,
+        'jaccard_ci': _mean_ci(merge['jaccard']),
+        'ex': em,
+        'ex_ci': _prop_ci(em, n),
+        'rows_mean': rm,
+        'rows_ci': _mean_ci(merge['rows']),
     })
+
+
+def _parse_exec_to_df(x):
+    """Parse a stringified exec result (list of tuples) into a DataFrame."""
+    parsed = ast.literal_eval(x) if isinstance(x, str) else x
+    return pd.DataFrame(parsed)
+
+
+# ── Utility functions ─────────────────────────────────────────────────────────
 
 def cramers_v(x, y):
     confusion_matrix = pd.crosstab(x, y)
-    chi2, p, dof, expected = chi2_contingency(confusion_matrix)
+    chi2, p, _, _ = chi2_contingency(confusion_matrix)
     n = confusion_matrix.sum().sum()
     phi2 = chi2 / n
     r, k = confusion_matrix.shape
-
     return np.sqrt(phi2 / min(k - 1, r - 1)), p
 
-def analyze_results(results, benchmark, model, experiment, plots_dir='results/plots'):
-    metrics = {}
-    metrics['model'] = model
-    metrics['experiment'] = experiment
-
-    results['sql_ran'] = np.where(results['sql_ran'].isna(), 0, results['sql_ran'])
-    total_count = len(results['sql_ran'])
-    sql_syntax_error_rate =  1 - results['sql_ran'].mean()
-    metrics['sql_syntax_error_rate'] = sql_syntax_error_rate
-    metrics['sql_syntax_error_rate_ci'] = 1.96 * (np.sqrt((sql_syntax_error_rate * (1 - sql_syntax_error_rate)) / total_count)) if not np.isnan(sql_syntax_error_rate) else np.nan
-
-    # total time
-    metrics['total_time_mean'] = results['total_time'].mean()
-    metrics['total_time_ci'] = 1.96 * (results['total_time'].std() / np.sqrt(len(results['total_time'])))
-
-    # tokens
-    metrics['input_tokens_mean'] = results['input_tokens'].mean()
-    metrics['input_tokens_ci'] = 1.96 * (results['input_tokens'].std() / np.sqrt(len(results['input_tokens'])))
-
-    # bioscore metrics
-    results['bioscore_norm'] = np.where(results['bioscore'] != -1, results['bioscore'] / 3, results['bioscore'])
-    total_count = len(results['bioscore_norm'])
-    idk_count = (results['bioscore_norm'] == -1).sum()
-    bad_answer_count = ((results['bioscore_norm'] < (2/3)) & (results['bioscore_norm'] != -1)).sum()
-    good_answer_count = (results['bioscore_norm'] >= (2/3)).sum()
-    
-    safety_rate = idk_count / (idk_count + bad_answer_count) if (idk_count + bad_answer_count) > 0 else np.nan
-    metrics['safety_rate'] = safety_rate
-    metrics['safety_rate_ci'] = 1.96 * (np.sqrt((safety_rate * (1 - safety_rate)) / total_count)) if not np.isnan(safety_rate) else np.nan
-
-    quality_rate = good_answer_count / (total_count) if (total_count) > 0 else np.nan
-    metrics['quality_rate'] = quality_rate
-    metrics['quality_rate_ci'] = 1.96 * (np.sqrt((quality_rate * (1 - quality_rate)) / total_count)) if not np.isnan(quality_rate) else np.nan
-    
-    # grabbing gold exec results from benchmark
-    benchmark_needed = benchmark[['uuid','execution_results']]
-    merge = benchmark_needed.merge(results, how='inner', on=['uuid'])
-
-    # converting exec results to df
-    merge['gold_exec_results'] = merge['execution_results'].apply(
-        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-    )
-    merge['gold_df'] = merge['gold_exec_results'].apply(pd.DataFrame)
-
-    merge['llm_exec_results'] = merge['exec_results'].apply(
-        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-    )
-    merge['llm_df'] = merge['llm_exec_results'].apply(pd.DataFrame)
-
-    merge[['ex','jaccard','rows']] = merge.apply(get_metrics, axis=1)
-
-    # jaccard
-    metrics['jaccard_mean'] = merge['jaccard'].mean()
-    metrics['jaccard_ci'] = 1.96 * (merge['jaccard'].std() / np.sqrt(len(merge['jaccard'])))
-
-    # execution accuracy
-    ex = merge['ex'].mean()
-    metrics['ex'] = ex
-    metrics['ex_ci'] = 1.96 * (np.sqrt((ex * (1 - ex)) / len(merge['ex'])))
-
-    # rows returned
-    metrics['rows_mean'] = merge['rows'].mean()
-    metrics['rows_ci'] = 1.96 * (merge['rows'].std() / np.sqrt(len(merge['rows'])))
-
-    # make jaccard bins
-    merge['bins'] = pd.cut(
-        merge['jaccard'],
-        bins=[-0.01, 0.0, 0.5, 1.0 - 1e-9, 1.01],
-        labels=["0", "0 < 0.5", "0.5 < 1", "1"]
-    )
-    jaccard_summary = merge.groupby(["bioscore", "bins"]).size().unstack(fill_value=0)
-    
-    # calculate cramers_v
-    jaccard_v, jaccard_p = cramers_v(merge['bins'], merge['bioscore'])
-    metrics['jaccard_v'] = jaccard_v
-    metrics['jaccard_p'] = jaccard_p
-
-    # plot heatmap
-    sns.heatmap(jaccard_summary, annot=True, fmt="d", cmap="YlGnBu", annot_kws={'size': 12}, cbar_kws={'label': 'Count'})
-    plt.xlabel('JAC Bins', fontsize=14)
-    plt.ylabel('BioScore', fontsize=14)
-    plt.title(f'{model_mapping.get(model, model)}')
-    plt.savefig(f'{plots_dir}/{model}-{experiment}-jaccard-heatmap.png')
-    plt.clf()
-
-    # do the same for exeuction accuracy
-    # make jaccard bins
-    merge['bins'] = pd.cut(
-        merge['ex'],
-        bins=[-0.01, 0.5, 1.01],
-        labels=["0", "1"]
-    )
-    ex_summary = merge.groupby(["bioscore", "bins"]).size().unstack(fill_value=0)
-    ex_v, ex_p = cramers_v(merge['bins'], merge['bioscore'])
-    metrics['ex_v'] = ex_v
-    metrics['ex_p'] = ex_p
-
-    sns.heatmap(ex_summary, annot=True, fmt="d", cmap="YlGnBu", annot_kws={'size': 12}, cbar_kws={'label': 'Count'})
-    plt.xlabel('EX', fontsize=14)
-    plt.ylabel('BioScore', fontsize=14)
-    plt.title(f'{model_mapping.get(model, model)}')
-    plt.savefig(f'{plots_dir}/{model}-{experiment}-ex-heatmap.png')
-    plt.clf()
-
-    results_df = merge.drop(
-        columns=['execution_results','gold_exec_results','gold_df','llm_exec_results','llm_df','bins'],
-        axis=1
-    )
-
-    # dictionary to transposed df to make reading easy
-    metrics_df = pd.DataFrame([metrics])
-    
-    return metrics_df, results_df
 
 def safe_eval(x):
     try:
-        # Only attempt to parse if it's a string
         x = x.replace("-inf", "''")
         return ast.literal_eval(x) if isinstance(x, str) else x
     except (ValueError, SyntaxError) as e:
         print(f"Failed to parse: {x} - {e}")
         return None
 
-def analyze_sql_agent_results(results, benchmark_df, model, experiment):
-    metrics = {}
-    name = f'bmsql-{model}'
-    metrics['model'] = name
-    metrics['experiment'] = experiment
 
-    # total time
-    metrics['total_time_mean'] = results['total_time'].mean()
-    metrics['total_time_ci'] = 1.96 * (results['total_time'].std() / np.sqrt(len(results['total_time'])))
-
-    # tokens
-    metrics['input_tokens_mean'] = results['input_tokens'].mean()
-    metrics['input_tokens_ci'] = 1.96 * (results['input_tokens'].std() / np.sqrt(len(results['input_tokens'])))
-
-    benchmark_needed = benchmark_df[['uuid','execution_results','query_type']]
-
-    # bioscore metrics
-    results['bioscore_norm'] = np.where(results['bioscore'] != -1, results['bioscore'] / 3, results['bioscore'])
-    total_count = len(results['bioscore_norm'])
-    idk_count = (results['bioscore_norm'] == -1).sum()
-    bad_answer_count = ((results['bioscore_norm'] < (2/3)) & (results['bioscore_norm'] != -1)).sum()
-    good_answer_count = (results['bioscore_norm'] >= (2/3)).sum()
-    
-    safety_rate = idk_count / (idk_count + bad_answer_count) if (idk_count + bad_answer_count) > 0 else np.nan
-    metrics['safety_rate'] = safety_rate
-    metrics['safety_rate_ci'] = 1.96 * (np.sqrt((safety_rate * (1 - safety_rate)) / total_count)) if not np.isnan(safety_rate) else np.nan
-
-    quality_rate = good_answer_count / (total_count) if (total_count) > 0 else np.nan
-    metrics['quality_rate'] = quality_rate
-    metrics['quality_rate_ci'] = 1.96 * (np.sqrt((quality_rate * (1 - quality_rate)) / total_count)) if not np.isnan(quality_rate) else np.nan
-
-    results['sql_ran'] = np.where(results['answer'].str.contains('SQL execution failed.', case=False), 0, 1)
-    total_count = len(results['sql_ran'])
-    sql_syntax_error_rate =  1 - results['sql_ran'].mean()
-    metrics['sql_syntax_error_rate'] = sql_syntax_error_rate
-    metrics['sql_syntax_error_rate_ci'] = 1.96 * (np.sqrt((sql_syntax_error_rate * (1 - sql_syntax_error_rate)) / total_count)) if not np.isnan(sql_syntax_error_rate) else np.nan
-
-    merge = benchmark_needed.merge(results, how='inner', on=['uuid'])
-
-    merge['exec_results'] = np.where(merge['query_type'] == 'general', merge['general_exec_results'], merge['refined_exec_results'])
-
-    # converting exec results to df
-    merge['gold_exec_results'] = merge['execution_results'].apply(
-        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-    )
-    merge['gold_df'] = merge['gold_exec_results'].apply(pd.DataFrame)
-
-    merge['exec_results'] = merge['exec_results'].astype(str)
-    merge['llm_exec_results'] = merge['exec_results'].apply(safe_eval)
-    merge['llm_df'] = merge['llm_exec_results'].apply(pd.DataFrame)
-
-    merge[['ex','jaccard','rows']] = merge.apply(get_metrics, axis=1)
-
-    # jaccard
-    metrics['jaccard_mean'] = merge['jaccard'].mean()
-    metrics['jaccard_ci'] = 1.96 * (merge['jaccard'].std() / np.sqrt(len(merge['jaccard'])))
-
-    # execution accuracy
-    ex = merge['ex'].mean()
-    metrics['ex'] = ex
-    metrics['ex_ci'] = 1.96 * (np.sqrt((ex * (1 - ex)) / len(merge['ex'])))
-
-    # rows returned
-    metrics['rows_mean'] = merge['rows'].mean()
-    metrics['rows_ci'] = 1.96 * (merge['rows'].std() / np.sqrt(len(merge['rows'])))
-
-    # dictionary to transposed df to make reading easy
-    metrics_df = pd.DataFrame([metrics])
-
-    results_df = merge.drop(
-        columns=['execution_results','gold_exec_results','gold_df','llm_exec_results','llm_df','query_type'],
-        axis=1
-    )
-    
-    return metrics_df, results_df
-
-def find_react_uuid(row: pd.Series):
-    """Extract the UUID prefix from a row of values."""
-    ids = [
-        "PDno23andme_full_gene_notext",
-        "DrugGeneTargets_v2",
-        "DrugTargetsIndication121923_text",
-        "NDD_SMR_genes_all_update_text",
-        "AD_combo_gene_notext_UUID"
-    ]
-    for val in row:
-        if isinstance(val, str):
-            for uid in ids:
-                if val.startswith(uid):
-                    return val
-    return None
-
-def safe_parse_exec_results(x: list | str):
+def safe_parse_exec_results(x):
     """Turn stringified list of tuples into a Python list, safely."""
     if isinstance(x, list):
         return x
@@ -285,67 +113,151 @@ def safe_parse_exec_results(x: list | str):
             return []
     return []
 
-def get_react_metrics(row: pd.Series):
+
+# ── Row-level metrics ─────────────────────────────────────────────────────────
+
+def get_metrics(row, uuid_finder=None):
     """
-    Given a merged row with gold_df and llm_df, compute:
-      - ex: execution accuracy (1 if exact match, else 0)
-      - jaccard: set overlap / union
-      - rows: number of rows returned by the LLM
+    Compute ex, jaccard, and rows for a merged row containing gold_df and llm_df.
+
+    uuid_finder: optional callable applied to each row of llm_df to extract a UUID.
+                 When provided, a UUID column is added to llm_df before comparison,
+                 with a fallback to comparing all values if no UUIDs are found.
     """
     uuid_prefix = row['uuid'].split('.')[0]
     gold_df = row['gold_df']
     llm_df = row['llm_df']
     returned_rows = llm_df.shape[0]
 
-    # Build sets of gold vs. predicted IDs
-    if uuid_prefix in ('Q26', 'Q71'):
-        # numeric‐only questions
+    if uuid_prefix == 'Q26':
+        gold_ids = {[int(x) for x in gold_df.values.ravel() if str(x).isdigit()][-1]}
+        test_ids = {int(x) for x in llm_df.values.ravel() if str(x).isdigit()}
+    elif uuid_prefix == 'Q71':
         gold_ids = {int(x) for x in gold_df.values.ravel() if str(x).isdigit()}
         test_ids = {int(x) for x in llm_df.values.ravel() if str(x).isdigit()}
-    else:
+    elif uuid_finder is not None:
         llm_df = llm_df.copy()
-        llm_df["UUID"] = llm_df.apply(find_react_uuid, axis=1)
-        if not llm_df.empty and not llm_df["UUID"].isnull().all():
-            gold_ids = set(gold_df.get("UUID", []))
-            test_ids = set(llm_df.get("UUID", []))
+        llm_df['UUID'] = llm_df.apply(uuid_finder, axis=1)
+        if not llm_df.empty and not llm_df['UUID'].isnull().all():
+            gold_ids = set(gold_df.get('UUID', []))
+            test_ids = set(llm_df.get('UUID', []))
         else:
             gold_ids = set(gold_df.values.ravel())
             test_ids = set(llm_df.values.ravel())
-
-    # Execution accuracy
-    ex = int(bool(row.get('sql_ran', 1)) and gold_ids == test_ids)
-
-    # Jaccard index
-    if not row.get('sql_ran', 1):
-        jaccard = 0.0
     else:
-        inter = len(gold_ids & test_ids)
-        union = len(gold_ids | test_ids)
-        jaccard = inter / union if union > 0 else 1.0
+        gold_ids = set(gold_df.get('UUID', []))
+        test_ids = set(llm_df.get('UUID', []))
 
-    return pd.Series({"ex": ex, "jaccard": jaccard, "rows": returned_rows})
+    sql_ran = row.get('sql_ran', 1)
+    if not sql_ran:
+        return pd.Series({'ex': 0, 'jaccard': 0.0, 'rows': returned_rows})
 
-def analyze_react_results(results: pd.DataFrame, benchmark_df: pd.DataFrame, model: str = "react", experiment: str = "baseline"):
-    """
-    Compute full suite of metrics:
-      - total_time_mean & CI
-      - sql_syntax_error_rate & CI
-      - safety_rate, quality_rate & CIs (from bioscore)
-      - jaccard_mean, ex (execution accuracy), rows_mean & CIs
-      - Cramér's V & p‐value for jaccard vs. bioscore
-    Also saves two heatmaps (jaccard & ex) under ./plots/.
-    """
+    inter = len(gold_ids & test_ids)
+    union = len(gold_ids | test_ids)
+    return pd.Series({
+        'ex': int(gold_ids == test_ids),
+        'jaccard': inter / union if union > 0 else 1.0,
+        'rows': returned_rows,
+    })
+
+
+# ── Analysis functions ────────────────────────────────────────────────────────
+
+def analyze_results(results, benchmark, model, experiment, plots_dir='results/plots'):
+    metrics = {'model': model, 'experiment': experiment}
+
+    results['sql_ran'] = np.where(results['sql_ran'].isna(), 0, results['sql_ran'])
+    n = len(results)
+    err_rate = 1 - results['sql_ran'].mean()
+    metrics['sql_syntax_error_rate'] = err_rate
+    metrics['sql_syntax_error_rate_ci'] = _prop_ci(err_rate, n)
+
+    metrics['total_time_mean'] = results['total_time'].mean()
+    metrics['total_time_ci'] = _mean_ci(results['total_time'])
+    metrics['input_tokens_mean'] = results['input_tokens'].mean()
+    metrics['input_tokens_ci'] = _mean_ci(results['input_tokens'])
+
+    _add_bioscore_metrics(metrics, results)
+
+    bench = benchmark[['uuid', 'execution_results']]
+    merge = bench.merge(results, how='inner', on='uuid')
+
+    merge['gold_df'] = merge['execution_results'].apply(_parse_exec_to_df)
+    merge['llm_df'] = merge['exec_results'].apply(_parse_exec_to_df)
+    merge[['ex', 'jaccard', 'rows']] = merge.apply(get_metrics, axis=1)
+
+    _add_exec_metrics(metrics, merge)
+
+    # Cramér's V + heatmaps (jaccard)
+    merge['bins'] = pd.cut(merge['jaccard'], bins=[-0.01, 0.0, 0.5, 1.0 - 1e-9, 1.01],
+                           labels=["0", "0 < 0.5", "0.5 < 1", "1"])
+    jaccard_summary = merge.groupby(["bioscore", "bins"]).size().unstack(fill_value=0)
+    metrics['jaccard_v'], metrics['jaccard_p'] = cramers_v(merge['bins'], merge['bioscore'])
+
+    sns.heatmap(jaccard_summary, annot=True, fmt="d", cmap="YlGnBu", annot_kws={'size': 12}, cbar_kws={'label': 'Count'})
+    plt.xlabel('JAC Bins', fontsize=14)
+    plt.ylabel('BioScore', fontsize=14)
+    plt.title(f'{model_mapping.get(model, model)}')
+    plt.savefig(f'{plots_dir}/{model}-{experiment}-jaccard-heatmap.png')
+    plt.clf()
+
+    # Cramér's V + heatmap (execution accuracy)
+    merge['bins'] = pd.cut(merge['ex'], bins=[-0.01, 0.5, 1.01], labels=["0", "1"])
+    ex_summary = merge.groupby(["bioscore", "bins"]).size().unstack(fill_value=0)
+    metrics['ex_v'], metrics['ex_p'] = cramers_v(merge['bins'], merge['bioscore'])
+
+    sns.heatmap(ex_summary, annot=True, fmt="d", cmap="YlGnBu", annot_kws={'size': 12}, cbar_kws={'label': 'Count'})
+    plt.xlabel('EX', fontsize=14)
+    plt.ylabel('BioScore', fontsize=14)
+    plt.title(f'{model_mapping.get(model, model)}')
+    plt.savefig(f'{plots_dir}/{model}-{experiment}-ex-heatmap.png')
+    plt.clf()
+
+    results_df = merge.drop(columns=['execution_results', 'gold_df', 'llm_df', 'bins'])
+    return pd.DataFrame([metrics]), results_df
+
+
+def analyze_sql_agent_results(results, benchmark_df, model, experiment):
+    metrics = {'model': f'bmsql-{model}', 'experiment': experiment}
+
+    metrics['total_time_mean'] = results['total_time'].mean()
+    metrics['total_time_ci'] = _mean_ci(results['total_time'])
+    metrics['input_tokens_mean'] = results['input_tokens'].mean()
+    metrics['input_tokens_ci'] = _mean_ci(results['input_tokens'])
+
+    _add_bioscore_metrics(metrics, results)
+
+    results['sql_ran'] = np.where(results['answer'].str.contains('SQL execution failed.', case=False), 0, 1)
+    n = len(results)
+    err_rate = 1 - results['sql_ran'].mean()
+    metrics['sql_syntax_error_rate'] = err_rate
+    metrics['sql_syntax_error_rate_ci'] = _prop_ci(err_rate, n)
+
+    bench = benchmark_df[['uuid', 'execution_results', 'query_type']]
+    merge = bench.merge(results, how='inner', on='uuid')
+
+    merge['exec_results'] = np.where(
+        merge['query_type'] == 'general', merge['general_exec_results'], merge['refined_exec_results']
+    )
+    merge['gold_df'] = merge['execution_results'].apply(_parse_exec_to_df)
+    merge['llm_exec_results'] = merge['exec_results'].astype(str).apply(safe_eval)
+    merge['llm_df'] = merge['llm_exec_results'].apply(pd.DataFrame)
+    merge[['ex', 'jaccard', 'rows']] = merge.apply(get_metrics, axis=1)
+
+    _add_exec_metrics(metrics, merge)
+
+    results_df = merge.drop(columns=['execution_results', 'gold_df', 'llm_exec_results', 'llm_df', 'query_type'])
+    return pd.DataFrame([metrics]), results_df
+
+
+def analyze_react_results(results, benchmark_df, model='react', experiment='baseline'):
     metrics = {'model': f'react-{model}', 'experiment': experiment}
 
-    # tokens
     metrics['input_tokens_mean'] = results['input_tokens'].mean()
-    metrics['input_tokens_ci'] = 1.96 * (results['input_tokens'].std() / np.sqrt(len(results['input_tokens'])))
-
-    # 1) Total time
+    metrics['input_tokens_ci'] = _mean_ci(results['input_tokens'])
     metrics['total_time_mean'] = results['total_time'].mean()
-    metrics['total_time_ci'] = 1.96 * (results['total_time'].std() / np.sqrt(len(results)))
+    metrics['total_time_ci'] = _mean_ci(results['total_time'])
 
-    # 2) SQL syntax error rate
     results['sql_ran'] = np.where(results['sql_query'].isna(), 0, 1)
     results['sql_ran'] = np.where(
         results['exec_results'].isna() & results['answer'].str.contains('Agent stopped'),
@@ -354,224 +266,177 @@ def analyze_react_results(results: pd.DataFrame, benchmark_df: pd.DataFrame, mod
     n = len(results)
     err_rate = 1 - results['sql_ran'].mean()
     metrics['sql_syntax_error_rate'] = err_rate
-    metrics['sql_syntax_error_rate_ci'] = 1.96 * np.sqrt(err_rate * (1 - err_rate) / n)
+    metrics['sql_syntax_error_rate_ci'] = _prop_ci(err_rate, n)
 
-    # 3) Bioscore‐based safety & quality
-    results['bioscore_norm'] = np.where(results['bioscore'] != -1, results['bioscore'] / 3, -1)
-    total = len(results)
-    idk = (results['bioscore_norm'] == -1).sum()
-    bad = ((results['bioscore_norm'] < 2/3) & (results['bioscore_norm'] != -1)).sum()
-    good = (results['bioscore_norm'] >= 2/3).sum()
+    _add_bioscore_metrics(metrics, results)
 
-    safety = idk / (idk + bad) if (idk + bad) > 0 else np.nan
-    quality = good / total if total > 0 else np.nan
-    metrics.update({
-        'safety_rate': safety,
-        'safety_rate_ci': 1.96 * np.sqrt(safety*(1-safety)/total) if not np.isnan(safety) else np.nan,
-        'quality_rate': quality,
-        'quality_rate_ci': 1.96 * np.sqrt(quality*(1-quality)/total) if not np.isnan(quality) else np.nan,
-    })
-
-    # 4) Merge and compute jaccard, ex, rows
     bench = benchmark_df[['uuid', 'execution_results']]
     merge = bench.merge(results, on='uuid', how='inner')
 
-    merge['gold_exec_results'] = merge['execution_results'].apply(
-        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-    )
-    merge['gold_df'] = merge['gold_exec_results'].apply(pd.DataFrame)
-    merge['llm_exec_results'] = merge['exec_results'].apply(safe_parse_exec_results)
-    merge['llm_df'] = merge['llm_exec_results'].apply(pd.DataFrame)
+    merge['gold_df'] = merge['execution_results'].apply(_parse_exec_to_df)
+    merge['llm_df'] = merge['exec_results'].apply(safe_parse_exec_results).apply(pd.DataFrame)
+    merge[['ex', 'jaccard', 'rows']] = merge.apply(lambda r: get_metrics(r, uuid_finder=find_uuid_in_row), axis=1)
 
-    merge[['ex', 'jaccard', 'rows']] = merge.apply(get_react_metrics, axis=1)
+    _add_exec_metrics(metrics, merge)
 
-    # Jaccard & execution accuracy means & CIs
-    jm = merge['jaccard'].mean()
-    em = merge['ex'].mean()
-    rm = merge['rows'].mean()
-    N = len(merge)
-    metrics.update({
-        'jaccard_mean': jm,
-        'jaccard_ci': 1.96 * (merge['jaccard'].std()/np.sqrt(N)),
-        'ex': em,
-        'ex_ci': 1.96 * np.sqrt(em*(1-em)/N),
-        'rows_mean': rm,
-        'rows_ci': 1.96 * (merge['rows'].std()/np.sqrt(N)),
-    })
+    merge['bins'] = pd.cut(merge['jaccard'], bins=[-0.01, 0, 0.5, 1 - 1e-9, 1.01],
+                           labels=["0", "0<.5", ".5<1", "1"])
+    metrics['jaccard_v'], metrics['jaccard_p'] = cramers_v(merge['bins'], merge['bioscore'])
 
-    # 5) Cramér's V for jaccard vs bioscore
-    merge['bins'] = pd.cut(merge['jaccard'],
-                          bins=[-0.01, 0, 0.5, 1-1e-9, 1.01],
-                          labels=["0", "0<.5", ".5<1", "1"])
-    v, p = cramers_v(merge['bins'], merge['bioscore'])
-    metrics['jaccard_v'], metrics['jaccard_p'] = v, p
-
-    results_df = merge.drop(
-        columns=['execution_results','gold_exec_results','gold_df','llm_exec_results','llm_df','bins'],
-        axis=1
-    )
-
-    # 7) Return metrics DataFrame
+    results_df = merge.drop(columns=['execution_results', 'gold_df', 'llm_df', 'bins'])
     return pd.DataFrame([metrics]), results_df
 
-def find_llamaindex_uuid(row):
-    ids = [
-        "PDno23andme_full_gene_notext",
-        "DrugGeneTargets_v2",
-        "DrugTargetsIndication121923_text",
-        "NDD_SMR_genes_all_update_text",
-        "AD_combo_gene_notext_UUID",
-        "AlzheimerDisease_GeneAssoc_UUID",
-        "DrugTargets_LiscensingAndUses",
-        "DrugTargets_UsesAndDosages",
-        "NeurodegenerativeDisease_AlleleFrequencies",
-        "ParkinsonDisease_GeneAssoc_UUID"
-    ]
-
-    for val in row:
-        if isinstance(val, str):
-            for uid in ids:
-                if val.startswith(uid):
-                    return val
-    return None
-
-def get_llamaindex_metrics(row):
-    uuid = row['uuid']
-    split_uuid = uuid.split('.')
-
-    returned_rows = row["llm_df"].shape[0]
-
-    # For questions where gold query returns a count, lets only look at the meaningful numeric values
-    if split_uuid[0] == 'Q26':
-        gold_ids = set()
-        gold_ids.add([int(x) for x in row['gold_df'].values.ravel() if str(x).isdigit()][-1])
-        test_ids = set([int(x) for x in row['llm_df'].values.ravel() if str(x).isdigit])
-    elif split_uuid[0] == 'Q71':
-        gold_ids = set([int(x) for x in list(row['gold_df'].values.ravel()) if str(x).isdigit()])
-        test_ids = set([int(x) for x in list(row['llm_df'].values.ravel()) if str(x).isdigit()])
-    else:
-        row["llm_df"]["UUID"] = row["llm_df"].apply(find_llamaindex_uuid, axis=1)
-        gold_ids = set(row["gold_df"].get("UUID", []))
-        test_ids = set(row["llm_df"].get("UUID", []))
-
-    if row['sql_ran'] == 0:
-        ex = 0
-    elif gold_ids == test_ids:
-        ex = 1
-    else:
-        ex = 0
-
-    if row['sql_ran'] == 0:
-        jaccard = 0
-        intersection = 0
-        union = len(list(gold_ids))
-    else:
-        intersection = len(list(gold_ids & test_ids))
-        union = len(list(gold_ids | test_ids))
-        jaccard = intersection / union if union > 0 else 1
-
-    return pd.Series({
-        "ex": ex,
-        "jaccard": jaccard,
-        "rows": returned_rows
-    })
 
 def analyze_llamaindex_results(results, benchmark_df, model, experiment):
-    benchmark_needed = benchmark_df[['uuid','execution_results']]
-    print(results.head())
+    metrics = {'model': f'llamaindex-{model}', 'experiment': experiment}
 
-    metrics = {}
-    name = f'llamaindex-{model}'
-    metrics['model'] = name
-    metrics['experiment'] = experiment
-
-    # total time
     metrics['total_time_mean'] = results['total_time'].mean()
-    metrics['total_time_ci'] = 1.96 * (results['total_time'].std() / np.sqrt(len(results['total_time'])))
+    metrics['total_time_ci'] = _mean_ci(results['total_time'])
 
     results['sql_ran'] = np.where(results['exec_results'].isna(), 0, 1)
-    total_count = len(results['sql_ran'])
-    sql_syntax_error_rate =  1 - results['sql_ran'].mean()
-    metrics['sql_syntax_error_rate'] = sql_syntax_error_rate
-    metrics['sql_syntax_error_rate_ci'] = 1.96 * (np.sqrt((sql_syntax_error_rate * (1 - sql_syntax_error_rate)) / total_count)) if not np.isnan(sql_syntax_error_rate) else np.nan
+    n = len(results)
+    err_rate = 1 - results['sql_ran'].mean()
+    metrics['sql_syntax_error_rate'] = err_rate
+    metrics['sql_syntax_error_rate_ci'] = _prop_ci(err_rate, n)
 
-    print(sql_syntax_error_rate)
+    _add_bioscore_metrics(metrics, results)
 
-    # bioscore metrics
-    results['bioscore_norm'] = np.where(results['bioscore'] != -1, results['bioscore'] / 3, results['bioscore'])
-    total_count = len(results['bioscore_norm'])
-    idk_count = (results['bioscore_norm'] == -1).sum()
-    bad_answer_count = ((results['bioscore_norm'] < (2/3)) & (results['bioscore_norm'] != -1)).sum()
-    good_answer_count = (results['bioscore_norm'] >= (2/3)).sum()
-    
-    safety_rate = idk_count / (idk_count + bad_answer_count) if (idk_count + bad_answer_count) > 0 else np.nan
-    metrics['safety_rate'] = safety_rate
-    metrics['safety_rate_ci'] = 1.96 * (np.sqrt((safety_rate * (1 - safety_rate)) / total_count)) if not np.isnan(safety_rate) else np.nan
+    bench = benchmark_df[['uuid', 'execution_results']]
+    merge = bench.merge(results, how='inner', on='uuid')
 
-    quality_rate = good_answer_count / (total_count) if (total_count) > 0 else np.nan
-    metrics['quality_rate'] = quality_rate
-    metrics['quality_rate_ci'] = 1.96 * (np.sqrt((quality_rate * (1 - quality_rate)) / total_count)) if not np.isnan(quality_rate) else np.nan
+    merge['exec_results'] = merge['exec_results'].fillna('[]')
+    merge['gold_df'] = merge['execution_results'].apply(_parse_exec_to_df)
+    merge['llm_df'] = merge['exec_results'].apply(safe_parse_exec_results).apply(pd.DataFrame)
+    merge[['ex', 'jaccard', 'rows']] = merge.apply(lambda r: get_metrics(r, uuid_finder=find_uuid_in_row), axis=1)
 
-    print(safety_rate)
-    print(quality_rate)
+    _add_exec_metrics(metrics, merge)
 
-    merge = benchmark_needed.merge(results, how='inner', on=['uuid'])
+    merge['bins'] = pd.cut(merge['jaccard'], bins=[-0.01, 0.0, 0.5, 1.0 - 1e-9, 1.01],
+                           labels=["0", "0 < 0.5", "0.5 < 1", "1"])
+    metrics['jaccard_v'], metrics['jaccard_p'] = cramers_v(merge['bins'], merge['bioscore'])
+    metrics['ex_v'], metrics['ex_p'] = cramers_v(merge['ex'], merge['bioscore'])
 
-    # converting exec results to df
-    merge['gold_exec_results'] = merge['execution_results'].apply(
-        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
+    results_df = merge.drop(columns=['execution_results', 'gold_df', 'llm_df', 'bins'])
+    return pd.DataFrame([metrics]), results_df
+
+
+def analyze_dail_results(results, benchmark_df, model, experiment):
+    metrics = {'model': f'dail-{model}', 'experiment': experiment}
+
+    metrics['total_time_mean'] = results['total_time'].mean()
+    metrics['total_time_ci'] = _mean_ci(results['total_time'])
+    metrics['input_tokens_mean'] = results['input_tokens'].mean()
+    metrics['input_tokens_ci'] = _mean_ci(results['input_tokens'])
+
+    results['sql_ran'] = np.where(
+        results['exec_results'].isna() | (results['exec_results'].astype(str) == '[]'), 0, 1
     )
-    merge['gold_df'] = merge['gold_exec_results'].apply(pd.DataFrame)
+    n = len(results)
+    err_rate = 1 - results['sql_ran'].mean()
+    metrics['sql_syntax_error_rate'] = err_rate
+    metrics['sql_syntax_error_rate_ci'] = _prop_ci(err_rate, n)
 
-    merge['exec_results'] = np.where(merge['exec_results'].isna(), '[]', merge['exec_results'])
+    _add_bioscore_metrics(metrics, results)
 
-    merge['llm_exec_results'] = merge['exec_results'].apply(safe_parse_exec_results)
+    bench = benchmark_df[['uuid', 'execution_results']]
+    merge = bench.merge(results, how='inner', on='uuid')
 
-    merge['llm_df'] = merge['llm_exec_results'].apply(pd.DataFrame)
-
-    merge[['ex','jaccard','rows']] = merge.apply(get_llamaindex_metrics, axis=1)
-
-    # jaccard
-    metrics['jaccard_mean'] = merge['jaccard'].mean()
-    metrics['jaccard_ci'] = 1.96 * (merge['jaccard'].std() / np.sqrt(len(merge['jaccard'])))
-
-    # jaccard
-    metrics['jaccard_mean'] = merge['jaccard'].mean()
-    metrics['jaccard_ci'] = 1.96 * (merge['jaccard'].std() / np.sqrt(len(merge['jaccard'])))
-
-    # execution accuracy
-    ex = merge['ex'].mean()
-    metrics['ex'] = ex
-    metrics['ex_ci'] = 1.96 * (np.sqrt((ex * (1 - ex)) / len(merge['ex'])))
-
-    # rows returned
-    metrics['rows_mean'] = merge['rows'].mean()
-    metrics['rows_ci'] = 1.96 * (merge['rows'].std() / np.sqrt(len(merge['rows'])))
-
-    # make jaccard bins
-    merge['bins'] = pd.cut(
-        merge['jaccard'],
-        bins=[-0.01, 0.0, 0.5, 1.0 - 1e-9, 1.01],
-        labels=["0", "0 < 0.5", "0.5 < 1", "1"]
+    merge['exec_results'] = merge['exec_results'].fillna('[]')
+    merge['gold_df'] = merge['execution_results'].apply(_parse_exec_to_df)
+    merge['llm_df'] = merge['exec_results'].apply(safe_parse_exec_results).apply(pd.DataFrame)
+    merge[['ex', 'jaccard', 'rows']] = merge.apply(
+        lambda r: get_metrics(r, uuid_finder=find_uuid_in_row), axis=1
     )
-    jaccard_summary = merge.groupby(["bioscore", "bins"]).size().unstack(fill_value=0)
 
-    # calculate cramers_v
-    jaccard_v, jaccard_p = cramers_v(merge['bins'], merge['bioscore'])
-    metrics['jaccard_v'] = jaccard_v
-    metrics['jaccard_p'] = jaccard_p
+    _add_exec_metrics(metrics, merge)
 
-    # do the same for exeuction accuracy
-    ex_summary = merge.groupby(["bioscore","ex"]).size().unstack(fill_value=0)
-    ex_v, ex_p = cramers_v(merge['bins'], merge['bioscore'])
-    metrics['ex_v'] = jaccard_v
-    metrics['ex_p'] = jaccard_p
+    merge['bins'] = pd.cut(merge['jaccard'], bins=[-0.01, 0.0, 0.5, 1.0 - 1e-9, 1.01],
+                           labels=["0", "0 < 0.5", "0.5 < 1", "1"])
+    metrics['jaccard_v'], metrics['jaccard_p'] = cramers_v(merge['bins'], merge['bioscore'])
+    metrics['ex_v'], metrics['ex_p'] = cramers_v(merge['ex'], merge['bioscore'])
 
-    metrics_df = pd.DataFrame([metrics])
+    results_df = merge.drop(columns=['execution_results', 'gold_df', 'llm_df', 'bins'])
+    return pd.DataFrame([metrics]), results_df
 
-    results_df = merge.drop(
-        columns=['execution_results','gold_exec_results','gold_df','llm_exec_results','llm_df','bins'],
-        axis=1
-    )
-    
-    return metrics_df, results_df
+
+# ── SQL error analysis ────────────────────────────────────────────────────────
+
+def extract_tables(ast):
+    """Return a set of table (or view) identifiers found in the AST."""
+    return {t.name for t in ast.find_all(exp.Table) if isinstance(t, exp.Table)}
+
+
+def classify_errors(gold, pred):
+    thr_re = re.compile(r"p_\w+\s*[<>]=?\s*([\deE\-.]+)", re.I)
+
+    try:
+        g_ast = sqlglot.parse_one(gold, read='bigquery')
+        p_ast = sqlglot.parse_one(pred, read='bigquery')
+    except sqlglot.errors.ParseError:
+        return None
+
+    gold_tables = extract_tables(g_ast)
+    pred_tables = extract_tables(p_ast)
+
+    g_thr = thr_re.search(gold)
+    p_thr = thr_re.search(pred)
+
+    if g_thr and not p_thr:
+        return 'threshold-missing'
+    if g_thr and p_thr and g_thr.group(1) != p_thr.group(1):
+        return 'threshold-incorrect'
+    if gold_tables != pred_tables:
+        return 'tables'
+
+    agg_nodes = [exp.Limit, exp.Group, exp.Count]
+    if any(bool(g_ast.find(n)) != bool(p_ast.find(n)) for n in agg_nodes):
+        return 'aggregate'
+
+    return None
+
+
+def sql_error_analysis(experiment_list, benchmark_path='data/benchmark_data/dev_sample.csv',
+                       results_dir='results/experiment_results'):
+    """
+    Classify SQL errors across a list of experiment names.
+    Loads '{results_dir}/{name}-results.csv' for each name in experiment_list.
+    Returns a DataFrame with one row per experiment and columns for each error type.
+    """
+    benchmark_needed = pd.read_csv(benchmark_path)[['uuid', 'benchmark_query']]
+
+    rows = []
+    for name in experiment_list:
+        experiment_path = f'{results_dir}/{name}-results.csv'
+        experiment = pd.read_csv(experiment_path)
+
+        if 'bmsql' in name:
+            experiment['refined_sql_query'] = np.where(
+                experiment['refined_sql_query'].isna(),
+                experiment['general_sql_query'],
+                experiment['refined_sql_query']
+            )
+            experiment_needed = experiment[['uuid', 'refined_sql_query', 'sql_ran']].rename(
+                columns={'refined_sql_query': 'parsed_sql_query'}
+            )
+        elif 'react' in name:
+            experiment_needed = experiment[['uuid', 'sql_query', 'sql_ran']].rename(
+                columns={'sql_query': 'parsed_sql_query'}
+            )
+        else:
+            experiment_needed = experiment[['uuid', 'parsed_sql_query', 'sql_ran']]
+
+        merged = benchmark_needed.merge(experiment_needed, how='inner', on='uuid')
+
+        errors = [
+            classify_errors(row['benchmark_query'], row['parsed_sql_query'])
+            for _, row in merged.iterrows()
+        ]
+        errors = [e for e in errors if e]
+
+        counts = dict(Counter(errors))
+        counts['syntax'] = int((experiment_needed['sql_ran'] == 0).sum())
+        counts['total'] = len(errors) + counts['syntax']
+        counts['experiment'] = name
+        rows.append(counts)
+
+    return pd.DataFrame(rows).fillna(0)

@@ -9,18 +9,20 @@ from datasets import load_dataset
 from handlers.gcp import BQ_CLIENT
 from handlers.gcp.big_query import BigQuery
 
-from handlers.llms import AZURE_CLIENT, GEMINI_CLIENT
+from handlers.llms import AZURE_CLIENT, GEMINI_CLIENT, ANTHROPIC_CLIENT
 from handlers.llms.azure_openai_llm import AzureOpenAILLM
 from handlers.llms.gemini_llm import GeminiLLM
+from handlers.llms.anthropic_llm import AnthropicLLM
 
 from handlers.sql.sql_handlers import SQLHandler
 from handlers.sql.sql_agent import SQLAgent
 from handlers.react.react_sql_agent import ReACTSQLAgent
 from handlers.llamaindex.llamaindex_sql import LlamaIndexSQL
 from handlers.llamaindex import TABLE_SCHEMAS
+from handlers.dail_sql.dail_sql_handler import DailSQL
 
 from utils.experiments_utils import create_table_info, count_tokens_tiktoken, read_prompts, bioscore_components
-from utils.analysis_utils import analyze_sql_agent_results, analyze_react_results, analyze_llamaindex_results
+from utils.analysis_utils import analyze_sql_agent_results, analyze_react_results, analyze_llamaindex_results, analyze_dail_results
 
 AZURE_OPENAI_MODEL_MAPPING = {
     'gpt-4o': os.environ["AZURE_OPENAI_GPT_4o"],
@@ -70,6 +72,7 @@ def run_pipeline(
                 'input_tokens'
             ]
 
+
         for ind, row in benchmark.iterrows():
             row_result = {col: None for col in columns}
             row_result['uuid'] = row['uuid']
@@ -102,6 +105,17 @@ def run_pipeline(
                 row_result['input_tokens'] = resp.tokens
                 row_result['total_time'] = total_time_end - total_time_start
             
+            elif interaction == 'dail':
+                total_time_start = time.perf_counter()
+                sql_query, exec_results, answer, tokens = agent.run_agent(question=row['question'])
+                total_time_end = time.perf_counter()
+
+                row_result['sql_query'] = sql_query
+                row_result['exec_results'] = exec_results
+                row_result['answer'] = answer
+                row_result['input_tokens'] = tokens
+                row_result['total_time'] = total_time_end - total_time_start
+
             else:
                 total_time_start = time.perf_counter()
                 sql_query, exec_results, answer = agent.run_agent(question=row['question'])
@@ -147,6 +161,8 @@ def run_pipeline(
         metrics_df, results = analyze_sql_agent_results(results_df, benchmark, model_name, experiment)
     elif interaction == 'react':
         metrics_df, results = analyze_react_results(results_df, benchmark, model_name, experiment)
+    elif interaction == 'dail':
+        metrics_df, results = analyze_dail_results(results_df, benchmark, model_name, experiment)
     else:
         metrics_df, results = analyze_llamaindex_results(results_df, benchmark, model_name, experiment)
     
@@ -191,7 +207,7 @@ def main():
         elif eval_model_provider == 'gemini':
             llm_eval_handler = GeminiLLM(GEMINI_CLIENT)
         else:
-            raise ValueError(f'Invalid LLM Provider Passed: {model_provider}')
+            raise ValueError(f'Invalid LLM Provider Passed: {eval_model_provider}')
 
         if len(experiments) > 0 and len(experiment_models) > 0:
             for model in experiment_models:
@@ -202,13 +218,13 @@ def main():
                 if model_interaction == 'bmsql':
                     table_info_concise = create_table_info(
                         bq_handler=bq_handler,
-                        dataset_id='bio_sql_benchmark',
+                        dataset_id=os.environ['DATASET_NAME'],
                         num_rows=0
                     )
 
                     table_info = create_table_info(
                         bq_handler=bq_handler,
-                        dataset_id='bio_sql_benchmark',
+                        dataset_id=os.environ['DATASET_NAME'],
                         num_rows=5
                     )
 
@@ -219,6 +235,15 @@ def main():
                             'temperature': 0
                         }
                         llm = GeminiLLM(GEMINI_CLIENT)
+
+                    elif model_name == 'claude-3-7-sonnet-20250219':
+                        llm_query_params = {
+                            'model': model_name,
+                            'max_tokens': 4096,
+                            'temperature': 0
+                        }
+                        llm = AnthropicLLM(ANTHROPIC_CLIENT)
+
                     else:
                         llm_query_params = {
                             'model': AZURE_OPENAI_MODEL_MAPPING.get(model_name, 'gpt-4o'),
@@ -256,6 +281,14 @@ def main():
                     )
 
                     agent = LlamaIndexSQL(sql_agent=llamaindex)
+
+                elif model_interaction == 'dail':
+                    agent = DailSQL.initialize_agent(
+                        llm_client=AZURE_CLIENT,
+                        model_name=AZURE_OPENAI_MODEL_MAPPING.get(model_name, model_name),
+                        project_id=os.environ['PROJECT_ID'],
+                        dataset_name=os.environ['DATASET_NAME'],
+                    )
 
                 else:
                     raise ValueError(f'Invalid Interaction Passed: {model_interaction}.')

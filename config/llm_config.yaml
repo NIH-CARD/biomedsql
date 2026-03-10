@@ -7,23 +7,25 @@ experiment_models:
   - provider: "azure_openai"
     model: "gpt-4o"
   - provider: "azure_openai"
-    model: "gpt-4o-mini"
-  - provider: "azure_openai"
     model: "gpt-o3-mini"
+  - provider: "azure_openai"
+    model: "gpt-5.2"
   - provider: "gemini"
     model: "gemini-2.0-flash"
   - provider: "gemini"
-    model: "gemini-2.0-flash-lite"
+    model: "gemini-3-pro-preview"
   - provider: "anthropic"
     model: "claude-3-7-sonnet-20250219"
-  - provider: "azure_ai"
-    model: "Meta-Llama-3.1-405B-Instruct"
+  - provider: "anthropic"
+    model: "claude-opus-4-5-20251101"
   - provider: "huggingface"
-    model: "meta-llama/Llama-3.1-70B-Instruct"
+    model: "Qwen/Qwen2.5-Coder-14B-Instruct"
   - provider: "huggingface"
     model: "Qwen/Qwen2.5-Coder-32B-Instruct"
   - provider: "huggingface"
-    model: "Qwen/Qwen2.5-Coder-14B-Instruct"
+    model: "meta-llama/Llama-3.1-70B-Instruct"
+  - provider: "azure_ai"
+    model: "Meta-Llama-3.1-405B-Instruct"
 
 eval_model:
   provider: "azure_openai"
@@ -53,6 +55,18 @@ experiments:
   - name: "5-shot"
     num_rows: 0
     num_examples: 5
+    thresholds: False
+  - name: "10-shot"
+    num_rows: 0
+    num_examples: 10
+    thresholds: False
+  - name: "20-shot"
+    num_rows: 0
+    num_examples: 20
+    thresholds: False
+  - name: "40-shot"
+    num_rows: 0
+    num_examples: 40
     thresholds: False
   - name: "threshold"
     num_rows: 0

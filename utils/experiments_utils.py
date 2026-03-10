@@ -47,9 +47,9 @@ def create_table_info(bq_handler, dataset_id, num_rows):
     return text_output
 
 def get_examples(example_query_prompt, num_examples):
-    if num_examples > 0 and num_examples < 5:
+    if num_examples > 0 and num_examples < 40:
         return example_query_prompt.split(f'Example {num_examples+1}')[0]
-    elif num_examples == 5:
+    elif num_examples == 40:
         return example_query_prompt
     else:
         return ''

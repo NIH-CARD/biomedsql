@@ -31,6 +31,15 @@ experiment_models:
   - interaction: "index"
     provider: "gemini"
     model: "gemini-2.0-flash"
+  - interaction: "dail"
+    provider: "azure_openai"
+    model: "gpt-o3-mini"
+  - interaction: "dail"
+    provider: "azure_openai"
+    model: "gpt-4o"
+  - interaction: "dail"
+    provider: "gemini"
+    model: "gemini-2.0-flash"
 
 eval_model:
   provider: "azure_openai"

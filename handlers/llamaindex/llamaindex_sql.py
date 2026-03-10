@@ -76,7 +76,7 @@ class LlamaIndexSQL():
         
     def run_agent(self, question):
         try:
-            input_prompt = f'Question: {question} Always include the UUID column in your SELECT statements, except in cases of questions where the COUNT and ORDER BY functions are needed.'
+            input_prompt = f'Question: {question} Always include the UUID column in your SELECT statements, except in cases of questions where the COUNT and GROUP BY functions are needed.'
             response = self.sql_agent.query(input_prompt)
             final_sql_query = str(response.metadata.get("sql_query", ""))
             sql_query_results = str(response.metadata.get("result", ""))

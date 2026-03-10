@@ -6,18 +6,19 @@
 
 ## Requirements
 
-We provide conda environment.yml and requirements.txt files for both MacOS and Linux.
+We use [uv](https://docs.astral.sh/uv/) for dependency management. To install uv:
 
-To install requirements, we recommend creating a new environment with conda:
-```setup
-conda env create -f mac_environment.yml
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Or install via pip:
+Then install all dependencies:
 
-```setup
-pip install -r mac_requirements.txt
+```bash
+uv sync
 ```
+
+> **Note:** If you do not have GPUs available, you can skip the HuggingFace local model dependencies (`torch`, `transformers`, `sentence-transformers`) by commenting out any models with `provider: huggingface` in `config/llm_config.yaml` before running experiments.
 
 ## Environment Setup
 
@@ -28,7 +29,7 @@ BiomedSQL requires the extensive use of both opened a closed source LLMs. The fo
 * Gemini (for access to gemini-2.0-flash and gemini-2.0-flash-lite)
 * OpenAI (for access to the general completions() API for use in the Schema Indexing interaction paradigm)
 * Anthtropic (for access to claude-3-7-sonnet)
-* HuggingFace (for access to gated Meta-Llama repositories)
+* HuggingFace (for access to gated Qwen and Meta-Llama repositories)
 
 See ```config/sample.env``` for a complete list of specific information needed from each provider. Once complete, please move this file to ```config/.env``` for seamless use in the current experiment setup.
 
@@ -38,9 +39,11 @@ Our benchmark dataset and associated database tabular data can be found on [Hugg
 
 ## BigQuery Database Creation
 
-Coming soon we will provide code to create a fresh BigQuery Database from the parquet files available along with the BiomedSQL benchmark on HuggingFace.
+To create the BigQuery database from the tabular data hosted on HuggingFace, run:
 
-Reviewers will be provided with a pre-configured ```config/service_account.json``` file for access to the current database.
+```create bigquery database
+python create_database.py
+```
 
 ## LLM Experiments
 

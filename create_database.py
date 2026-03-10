@@ -1,4 +1,5 @@
 import os
+import google.auth
 from dotenv import load_dotenv
 from huggingface_hub import snapshot_download
 from google.cloud import storage, bigquery
@@ -6,6 +7,12 @@ from google.oauth2 import service_account
 from google.api_core.exceptions import Conflict
 
 def download_db_data(local_dir):
+    save_dir = f'{local_dir}/db_data'
+
+    if os.path.isdir(save_dir) and any(os.scandir(save_dir)):
+        print(f'Files already downloaded at {save_dir}')
+        return save_dir
+
     local_path = snapshot_download(
         repo_id="NIH-CARD/BiomedSQL",
         repo_type="dataset",
@@ -21,8 +28,6 @@ def download_db_data(local_dir):
     return save_dir
 
 def upload_to_bigquery(data_dir):
-    ### TODO: pull from .env when experiments finish
-    ### TODO: add an option to go straight from local
     CREDENTIALS = service_account.Credentials.from_service_account_file(os.environ["SERVICE_ACCOUNT_PATH"])
     project = os.environ["PROJECT_ID"]
     storage_client = storage.Client(credentials=CREDENTIALS, project=project)
@@ -48,27 +53,38 @@ def upload_to_bigquery(data_dir):
         bq_client.get_dataset(dataset_id)
 
     for file in os.listdir(data_dir):
-        blob = bucket.blob(file)
+        if file in ['AlzheimerDisease_CombinedGeneData_UUID.parquet','DrugGeneTargets_ComprehensiveAnnotations_updated.parquet','DrugTargets_IndicationsAndTherapeuticUses.parquet','NeurodegenerativeDiseases_SMR_Genes_Full.parquet','ParkinsonDisease_CompleteGeneData_No23andMe.parquet']:
+            blob = bucket.blob(file)
 
-        if not blob.exists():
-            blob.upload_from_filename(f'{data_dir}/{file}')
-            print(f'File {file} uploaded!')
-        else:
-            print(f'File {file} already in bucket!')
+            if not blob.exists():
+                blob.upload_from_filename(f'{data_dir}/{file}')
+                print(f'File {file} uploaded!')
+            else:
+                print(f'File {file} already in bucket!')
 
-        file_name = file.split('.')[0]
+            file_name = file.split('.')[0]
 
-        table_id = f'{dataset_id}.{file_name}'
-        uri = f'gs://{bucket_name}/{file}'
-        
-        job_config = bigquery.LoadJobConfig(
-            source_format = bigquery.SourceFormat.PARQUET,
-            autodetect = True,
-            write_disposition = "WRITE_TRUNCATE"
-        )
+            table_id = f'{dataset_id}.{file_name}'
+            uri = f'gs://{bucket_name}/{file}'
+            
+            file_extension = file.split('.')[1]
 
-        load_job = bq_client.load_table_from_uri(uri, table_id, job_config=job_config)
-        load_job.result() 
+            if file_extension == 'parquet':
+                job_config = bigquery.LoadJobConfig(
+                    source_format = bigquery.SourceFormat.PARQUET,
+                    autodetect = True,
+                    write_disposition = "WRITE_TRUNCATE"
+                )
+            
+            if file_extension == 'csv':
+                job_config = bigquery.LoadJobConfig(
+                    source_format = bigquery.SourceFormat.CSV,
+                    autodetect = True,
+                    write_disposition = "WRITE_TRUNCATE"
+                )
+
+            load_job = bq_client.load_table_from_uri(uri, table_id, job_config=job_config)
+            load_job.result() 
  
 def main():
     load_dotenv('config/.env')

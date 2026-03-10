@@ -48,15 +48,27 @@ class AnthropicLLM(BaseLLM):
         """
 
         try:
+            thinking_cfg=None
+            if model_name == 'claude-opus-4-5-20251101':
+                thinking_cfg={"type": "enabled", "budget_tokens": 1024}
+                max_tokens=2048
+                temperature = 1.0
+
             chat_completion = self.llm_client.messages.create(
                 model=model_name,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 messages=[
                     {"role": "user", "content": query_text}
-                ]
+                ],
+                thinking=thinking_cfg
             )
-            response = chat_completion.content[0].text
+
+            # Extract response based on whether thinking was enabled
+            if thinking_cfg:
+                response = next(block.text for block in chat_completion.content if block.type == "text")
+            else:
+                response = chat_completion.content[0].text
             return response
         
         except Exception as e:

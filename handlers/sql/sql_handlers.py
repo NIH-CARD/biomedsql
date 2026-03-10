@@ -166,7 +166,7 @@ class SQLHandler:
         - If user mentions FDA approval, include those columns. 
         - If user mentions allele frequencies, include effect and non-effect allele freq columns.
         - FROM clause: `{PROJECT_ID}.{DATASET_NAME}.TABLE_NAME`
-        - Always include the UUID column in your SELECT statements, except in cases of questions where the COUNT and ORDER BY functions are needed.
+        - Always include the UUID column in your SELECT statements, except in cases of questions where the COUNT and GROUP BY functions are needed.
         - Unless the user explicitly requests a different LIMIT, default your queries to LIMIT 100.
         - Return only the final SQL in a markdown code block:
         ```sql
