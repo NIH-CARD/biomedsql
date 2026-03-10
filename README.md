@@ -1,4 +1,6 @@
-# BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases 
+# BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases
+
+Preprint: https://arxiv.org/abs/2505.20321
 
 ![Alt text](assets/text-to-sql-workflow.png)
 
@@ -22,12 +24,12 @@ uv sync
 
 BiomedSQL requires the extensive use of both opened a closed source LLMs. The following services are needed to run the full set of experiments:
 
-* AzureOpenAI (with endpoints for gpt-4o, gpt-4o-mini, and gpt-o3-mini)
-* AzureAI (with an endpoint for Meta-Llama-405B)
-* Gemini (for access to gemini-2.0-flash and gemini-2.0-flash-lite)
-* OpenAI (for access to the general completions() API for use in the Schema Indexing interaction paradigm)
-* Anthtropic (for access to claude-3-7-sonnet)
-* HuggingFace (for access to gated Qwen and Meta-Llama repositories)
+* AzureOpenAI (with endpoints for GPT-4o, GPT-o3-mini, and GPT-5.2)
+* AzureAI (with an endpoint for Meta-Llama-405B-Instruct)
+* Gemini (for access to Gemini-2.0-Flash and Gemini-3-Pro)
+* OpenAI (for access to the general ```completions()``` API for use in the Schema Indexing interaction paradigm)
+* Anthtropic (for access to Claude-3.7-Sonnet and Claude-4.5-Opus)
+* HuggingFace (for access to gated Qwen-2.5-Coder-14B-Instruct, Qwen-2.5-Coder-32B-Instruct, and Llama-70B-Instruct repositories)
 
 See ```config/sample.env``` for a complete list of specific information needed from each provider. Once complete, please move this file to ```config/.env``` for seamless use in the current experiment setup.
 
@@ -68,13 +70,13 @@ python run_interaction_experiments.py
 
 ## Generate Results
 
-To generate results figures and tables after experiments finished, run:
+To generate figures and tables after the experiments are finished, run:
 
 ```results
 python results.py
 ```
 
-Tables will show up in ```results``` and plots will show up in ```results/plots```.
+Tables will show up in ```results/``` and plots will show up in ```results/plots/```.
 
 ## Results
 
@@ -89,9 +91,9 @@ On BiomedSQL, GPT-o3-mini is consistently the top-performing model on the variet
 
 ## License and Contributing
 
-This respository is under the PolyForm Noncommercial License (Version 1.0.0). To contribute, simply clone the repository and open a pull request.
+This respository is under the PolyForm Noncommercial License (Version 1.0.0). 
 
-For any bugs or other needed fixes, feel free to open an issue.
+To contribute, simply clone the repository and open a pull request. For any bugs or other fixes, feel free to open an issue.
 
 ## Relevant Citation
 ```
