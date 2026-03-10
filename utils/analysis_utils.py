@@ -320,6 +320,45 @@ def analyze_llamaindex_results(results, benchmark_df, model, experiment):
     return pd.DataFrame([metrics]), results_df
 
 
+def analyze_dail_results(results, benchmark_df, model, experiment):
+    metrics = {'model': f'dail-{model}', 'experiment': experiment}
+
+    metrics['total_time_mean'] = results['total_time'].mean()
+    metrics['total_time_ci'] = _mean_ci(results['total_time'])
+    metrics['input_tokens_mean'] = results['input_tokens'].mean()
+    metrics['input_tokens_ci'] = _mean_ci(results['input_tokens'])
+
+    results['sql_ran'] = np.where(
+        results['exec_results'].isna() | (results['exec_results'].astype(str) == '[]'), 0, 1
+    )
+    n = len(results)
+    err_rate = 1 - results['sql_ran'].mean()
+    metrics['sql_syntax_error_rate'] = err_rate
+    metrics['sql_syntax_error_rate_ci'] = _prop_ci(err_rate, n)
+
+    _add_bioscore_metrics(metrics, results)
+
+    bench = benchmark_df[['uuid', 'execution_results']]
+    merge = bench.merge(results, how='inner', on='uuid')
+
+    merge['exec_results'] = merge['exec_results'].fillna('[]')
+    merge['gold_df'] = merge['execution_results'].apply(_parse_exec_to_df)
+    merge['llm_df'] = merge['exec_results'].apply(safe_parse_exec_results).apply(pd.DataFrame)
+    merge[['ex', 'jaccard', 'rows']] = merge.apply(
+        lambda r: get_metrics(r, uuid_finder=find_uuid_in_row), axis=1
+    )
+
+    _add_exec_metrics(metrics, merge)
+
+    merge['bins'] = pd.cut(merge['jaccard'], bins=[-0.01, 0.0, 0.5, 1.0 - 1e-9, 1.01],
+                           labels=["0", "0 < 0.5", "0.5 < 1", "1"])
+    metrics['jaccard_v'], metrics['jaccard_p'] = cramers_v(merge['bins'], merge['bioscore'])
+    metrics['ex_v'], metrics['ex_p'] = cramers_v(merge['ex'], merge['bioscore'])
+
+    results_df = merge.drop(columns=['execution_results', 'gold_df', 'llm_df', 'bins'])
+    return pd.DataFrame([metrics]), results_df
+
+
 # ── SQL error analysis ────────────────────────────────────────────────────────
 
 def extract_tables(ast):
