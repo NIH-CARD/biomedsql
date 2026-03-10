@@ -277,6 +277,7 @@ def main():
                         project_id=os.environ['PROJECT_ID'],
                         database_name=os.environ['DATASET_NAME'],
                         llm_provider=model_provider,
+                        model_name=AZURE_OPENAI_MODEL_MAPPING.get(model_name, model_name)
                     )
 
                     agent = LlamaIndexSQL(sql_agent=llamaindex)
