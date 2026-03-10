@@ -41,17 +41,19 @@ Our benchmark dataset and associated database tabular data can be found on [Hugg
 
 To create the BigQuery database from the tabular data hosted on HuggingFace, run:
 
-```create bigquery database
-python create_database.py
+```bash
+uv run python create_database.py
 ```
 
 ## LLM Experiments
 
 To run the isolated SQL generation experiments for BiomedSQL, run:
 
-```isolated sql generation
-python run_llm_experiments.py
+```bash
+uv run python run_llm_experiments.py
 ```
+
+> **Note:** If you do not have GPUs available, comment out any models with `provider: huggingface` under the `experiment_models` section of `config/llm_config.yaml` before running.
 
 Currently we use the following open-source models and detail the following compute requirements to run our experiment pipeline as-is:
 * meta-llama/Llama-3.1-70B-Instruct (three NVIDIA 80GB A100 GPUs)
@@ -64,16 +66,16 @@ We understand that GPU access may differ from user to user, so in order to run o
 
 To run the interaction paradigm experiments for BiomedSQL, run:
 
-```interaction paradigm
-python run_interaction_experiments.py
+```bash
+uv run python run_interaction_experiments.py
 ```
 
 ## Generate Results
 
 To generate figures and tables after the experiments are finished, run:
 
-```results
-python results.py
+```bash
+uv run python results.py
 ```
 
 Tables will show up in ```results/``` and plots will show up in ```results/plots/```.

@@ -26,8 +26,8 @@ from utils.analysis_utils import analyze_sql_agent_results, analyze_react_result
 
 AZURE_OPENAI_MODEL_MAPPING = {
     'gpt-4o': os.environ["AZURE_OPENAI_GPT_4o"],
-    'gpt-4o-mini': os.environ["AZURE_OPENAI_GPT_4o_mini"],
-    'gpt-o3-mini': os.environ["AZURE_OPENAI_GPT_o3_mini"]
+    'gpt-o3-mini': os.environ["AZURE_OPENAI_GPT_o3_mini"],
+    'gpt-5.2': os.environ["AZURE_OPENAI_GPT_5_2"]
 }
 
 def run_pipeline(
