@@ -81,20 +81,6 @@ def compute_results_table(results_dir='results/experiment_results', interaction=
     pd.DataFrame(table).to_csv(f'{out_dir}/{interaction}-{model}_compute_results.csv', index=None)
 
 
-def verbose_results_table(results_dir='results/experiment_results', out_dir='results'):
-    models = ['gpt-o3-mini', 'claude-3-7-sonnet-20250219']
-    experiments = ['threshold-verbose', 'combo-verbose']
-
-    table = []
-    for model in models:
-        for experiment in experiments:
-            path = f'{results_dir}/{model}-{experiment}-metrics.csv'
-            if os.path.isfile(path):
-                table.append(_metric_row(pd.read_csv(path), f'{model}-{experiment}'))
-
-    pd.DataFrame(table).to_csv(f'{out_dir}/extra_experiment_results.csv', index=None)
-
-
 def big_schema_results_table(results_dir='results/experiment_results', out_dir='results'):
     model_list = ['gpt-o3-mini-baseline', 'gpt-o3-mini-combo', 'bmsql-gpt-o3-mini-baseline']
 
