@@ -1,13 +1,31 @@
 import os
+import re
+import json
 import tiktoken
+import sqlparse
 import pandas as pd
+from datasets import load_dataset
 from collections import defaultdict
 from sentence_transformers import SentenceTransformer
 from google.cloud import bigquery
 from google.api_core.exceptions import NotFound
+from handlers.llms import AZURE_CLIENT, GEMINI_CLIENT, ANTHROPIC_CLIENT
+from handlers.llms.azure_openai_llm import AzureOpenAILLM
+from handlers.llms.gemini_llm import GeminiLLM
+from handlers.llms.anthropic_llm import AnthropicLLM
 
 _EMBEDDINGS_DATASET = "vector_embeddings"
 _EMBEDDINGS_TABLE   = "example_vectors"
+
+# Skeleton generation — replaces literals with '?' for example retrieval
+_LITERAL_RE = re.compile(
+    r"""
+        (?:'[^']*' | "[^"]*")            # quoted strings
+      | (?<![\w-])\d+(?:\.\d+)?(?![\w]) # stand-alone numbers
+      | \b(?:true|false|null)\b          # booleans / NULL
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 
 PROMPT_TMPL = """You are an expert BigQuery SQL generator. Return only the SQL query with no explanation.
 
@@ -37,10 +55,22 @@ Use these guidelines when generating the query:
 SQL:"""
 
 
+def _to_skeleton(sql: str) -> str:
+    no_literals = _LITERAL_RE.sub("?", sql)
+    return sqlparse.format(no_literals, keyword_case="upper", strip_comments=True, reindent=False)
+
+
+def _write_jsonl(df: pd.DataFrame, path: str):
+    with open(path, "w", encoding="utf-8") as f:
+        for _, row in df.iterrows():
+            json.dump({"id": row["id"], "q": row["q"], "sql": row["sql"]}, f, ensure_ascii=False)
+            f.write("\n")
+
+
 class DailSQL:
-    def __init__(self, llm_client, model_name, schema_str, embedding_model,
+    def __init__(self, llm_handler, model_name, schema_str, embedding_model,
                  bq_client, project_id, dataset_name, use_skeleton=True, k=3):
-        self.llm_client = llm_client
+        self.llm_handler = llm_handler
         self.model_name = model_name
         self.schema_str = schema_str
         self.embedding_model = embedding_model
@@ -51,14 +81,23 @@ class DailSQL:
         self.k = k
 
     @staticmethod
-    def initialize_agent(llm_client, model_name, project_id, dataset_name,
+    def initialize_agent(model_provider, model_name, project_id, dataset_name,
                          embeddings_dir='dail-sql', use_skeleton=True, k=3):
+        if model_provider == 'azure_openai':
+            llm_handler = AzureOpenAILLM(AZURE_CLIENT)
+        elif model_provider == 'gemini':
+            llm_handler = GeminiLLM(GEMINI_CLIENT)
+        elif model_provider == 'anthropic':
+            llm_handler = AnthropicLLM(ANTHROPIC_CLIENT)
+        else:
+            raise ValueError(f'Invalid provider for dail interaction: {model_provider}')
+
         bq_client = bigquery.Client(project=project_id)
         embedding_model = SentenceTransformer("BAAI/bge-small-en-v1.5")
         DailSQL._ensure_embeddings(bq_client, project_id, embedding_model, embeddings_dir)
         schema_str = DailSQL._export_schema(bq_client, project_id, dataset_name)
         return DailSQL(
-            llm_client=llm_client,
+            llm_handler=llm_handler,
             model_name=model_name,
             schema_str=schema_str,
             embedding_model=embedding_model,
@@ -80,24 +119,46 @@ class DailSQL:
         except NotFound:
             print(f"Embeddings table not found. Building from {embeddings_dir}/...")
 
-        # Ensure the dataset exists
         dataset_ref = bigquery.Dataset(f"{project_id}.{_EMBEDDINGS_DATASET}")
         try:
             bq_client.create_dataset(dataset_ref)
         except Exception:
-            pass  # already exists
+            pass
 
-        # Load from pre-built parquet if available, otherwise embed from jsonl
         parquet_path = os.path.join(embeddings_dir, "example_vectors.parquet")
         if os.path.exists(parquet_path):
             print(f"Loading embeddings from {parquet_path}")
             df = pd.read_parquet(parquet_path)
+
         else:
-            print("Parquet not found — generating embeddings from jsonl files...")
-            df = pd.read_json(os.path.join(embeddings_dir, "examples_full.jsonl"), lines=True)
-            df["skeleton"] = pd.read_json(
-                os.path.join(embeddings_dir, "skeletons.jsonl"), lines=True
-            )["sql"]
+            examples_path  = os.path.join(embeddings_dir, "examples_full.jsonl")
+            skeletons_path = os.path.join(embeddings_dir, "skeletons.jsonl")
+
+            if not os.path.exists(examples_path) or not os.path.exists(skeletons_path):
+                train_path = os.path.join(embeddings_dir, "train.csv")
+                if not os.path.exists(train_path):
+                    print(f"train.csv not found. Downloading from HuggingFace...")
+                    os.makedirs(embeddings_dir, exist_ok=True)
+                    hf = load_dataset(
+                        "csv",
+                        data_files="https://huggingface.co/datasets/NIH-CARD/BiomedSQL/resolve/main/benchmark_data/train.csv"
+                    )
+                    hf["train"].to_pandas().to_csv(train_path, index=False)
+                print(f"Generating example files from {train_path}...")
+                df_train = pd.read_csv(train_path).sample(n=40, random_state=42)
+                df_train["skeleton"] = df_train["benchmark_query"].apply(_to_skeleton)
+                df_train = df_train.rename(
+                    columns={"uuid": "id", "question": "q", "benchmark_query": "sql"}
+                )
+                _write_jsonl(df_train[["id", "q", "sql"]], examples_path)
+                _write_jsonl(
+                    df_train[["id", "q", "skeleton"]].rename(columns={"skeleton": "sql"}),
+                    skeletons_path,
+                )
+
+            print("Generating embeddings from jsonl files...")
+            df = pd.read_json(examples_path, lines=True)
+            df["skeleton"] = pd.read_json(skeletons_path, lines=True)["sql"]
             df["embedding"] = embedding_model.encode(
                 df["q"].tolist(), normalize_embeddings=True, batch_size=64
             ).tolist()
@@ -181,11 +242,13 @@ class DailSQL:
         prompt = self._build_prompt(question, examples)
         input_tokens = self._count_tokens(prompt)
 
-        resp = self.llm_client.chat.completions.create(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}]
+        sql_raw = self.llm_handler.query(
+            model_name=self.model_name,
+            max_tokens=4096,
+            temperature=0,
+            query_text=prompt,
         )
-        sql_query = self._parse_sql(resp.choices[0].message.content)
+        sql_query = self._parse_sql(sql_raw)
 
         try:
             results = self.bq_client.query(sql_query).result()
@@ -194,5 +257,5 @@ class DailSQL:
             print(f"SQL execution failed: {e}")
             exec_results = []
 
-        # No NL answer generation in DAIL-SQL; return empty string
+        # No NL answer generation in DAIL-SQL
         return sql_query, exec_results, "", input_tokens

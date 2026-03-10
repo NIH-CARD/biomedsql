@@ -276,15 +276,15 @@ def main():
                     llamaindex = LlamaIndexSQL.initialize_sql_agent(
                         project_id=os.environ['PROJECT_ID'],
                         database_name=os.environ['DATASET_NAME'],
-                        llm_provider='gemini',
-                        model_name='gemini-2.0-flash'
+                        llm_provider=model_provider,
+                        model_name=AZURE_OPENAI_MODEL_MAPPING.get(model_name, model_name)
                     )
 
                     agent = LlamaIndexSQL(sql_agent=llamaindex)
 
                 elif model_interaction == 'dail':
                     agent = DailSQL.initialize_agent(
-                        llm_client=AZURE_CLIENT,
+                        model_provider=model_provider,
                         model_name=AZURE_OPENAI_MODEL_MAPPING.get(model_name, model_name),
                         project_id=os.environ['PROJECT_ID'],
                         dataset_name=os.environ['DATASET_NAME'],
