@@ -21,7 +21,7 @@ from handlers.llamaindex.llamaindex_sql import LlamaIndexSQL
 from handlers.llamaindex import TABLE_SCHEMAS
 from handlers.dail_sql.dail_sql_handler import DailSQL
 
-from utils.experiments_utils import create_table_info, count_tokens_tiktoken, read_prompts, bioscore_components
+from utils.experiments_utils import create_table_info, count_tokens_tiktoken, read_prompts, bioscore_components, generate_answer
 from utils.analysis_utils import analyze_sql_agent_results, analyze_react_results, analyze_llamaindex_results, analyze_dail_results
 
 AZURE_OPENAI_MODEL_MAPPING = {
@@ -107,13 +107,27 @@ def run_pipeline(
             
             elif interaction == 'dail':
                 total_time_start = time.perf_counter()
-                sql_query, exec_results, answer, tokens = agent.run_agent(question=row['question'])
+                sql_query, exec_results, _, sql_tokens = agent.run_agent(question=row['question'])
+
+                answer = ""
+                answer_tokens = 0
+                if exec_results:
+                    nl_prompt = nl_answer_prompt.format(
+                        question=row['question'],
+                        sql_query=sql_query,
+                        execution_results=exec_results
+                    )
+                    answer, answer_tokens, _ = generate_answer(
+                        llm_handler=agent.llm_handler,
+                        model_name=agent.model_name,
+                        prompt=nl_prompt
+                    )
                 total_time_end = time.perf_counter()
 
                 row_result['sql_query'] = sql_query
                 row_result['exec_results'] = exec_results
                 row_result['answer'] = answer
-                row_result['input_tokens'] = tokens
+                row_result['input_tokens'] = sql_tokens + answer_tokens
                 row_result['total_time'] = total_time_end - total_time_start
 
             else:

@@ -4,11 +4,15 @@ import json
 import tiktoken
 import sqlparse
 import pandas as pd
+from dataclasses import dataclass, field
+from typing import Any
 from datasets import load_dataset
 from collections import defaultdict
 from sentence_transformers import SentenceTransformer
 from google.cloud import bigquery
 from google.api_core.exceptions import NotFound
+from typeguard import typechecked
+from handlers.llms.base_llm import BaseLLM
 from handlers.llms import AZURE_CLIENT, GEMINI_CLIENT, ANTHROPIC_CLIENT
 from handlers.llms.azure_openai_llm import AzureOpenAILLM
 from handlers.llms.gemini_llm import GeminiLLM
@@ -67,18 +71,18 @@ def _write_jsonl(df: pd.DataFrame, path: str):
             f.write("\n")
 
 
+@typechecked
+@dataclass(frozen=True)
 class DailSQL:
-    def __init__(self, llm_handler, model_name, schema_str, embedding_model,
-                 bq_client, project_id, dataset_name, use_skeleton=True, k=3):
-        self.llm_handler = llm_handler
-        self.model_name = model_name
-        self.schema_str = schema_str
-        self.embedding_model = embedding_model
-        self.bq_client = bq_client
-        self.project_id = project_id
-        self.dataset_name = dataset_name
-        self.use_skeleton = use_skeleton
-        self.k = k
+    llm_handler: BaseLLM
+    model_name: str
+    schema_str: str
+    embedding_model: Any  # SentenceTransformer
+    bq_client: Any        # bigquery.Client
+    project_id: str
+    dataset_name: str
+    use_skeleton: bool = True
+    k: int = 3
 
     @staticmethod
     def initialize_agent(model_provider, model_name, project_id, dataset_name,
@@ -257,5 +261,5 @@ class DailSQL:
             print(f"SQL execution failed: {e}")
             exec_results = []
 
-        # No NL answer generation in DAIL-SQL
+        # NL answer generation in pipeline since its not "built in" like other interaction paradigms
         return sql_query, exec_results, "", input_tokens
