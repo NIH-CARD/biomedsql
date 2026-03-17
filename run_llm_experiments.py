@@ -17,7 +17,8 @@ from handlers.llms.gemini_llm import GeminiLLM
 from handlers.llms.anthropic_llm import AnthropicLLM
 from utils.experiments_utils import (
     create_table_info, read_prompts, generate_sql, parse_sql_query,
-    run_sql, generate_answer, bioscore_components, get_examples, get_thresholds
+    run_sql, generate_answer, bioscore_components, get_examples, get_thresholds,
+    substitute_env_placeholders
 )
 from utils.analysis_utils import analyze_results
 
@@ -214,7 +215,7 @@ def main():
                 "csv",
                 data_files='https://huggingface.co/datasets/NIH-CARD/BiomedSQL/resolve/main/benchmark_data/dev_sample.csv'
             )
-            benchmark = benchmark_hf['train'].to_pandas()
+            benchmark = substitute_env_placeholders(benchmark_hf['train'].to_pandas())
             benchmark.to_csv(benchmark_path, index=None)
 
         if eval_model_provider == 'azure_openai':

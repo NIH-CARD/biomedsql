@@ -1,9 +1,13 @@
 import os
 import pandas as pd
 from datasets import load_dataset
+from dotenv import load_dotenv
+
+load_dotenv('config/.env')
 
 from utils.plot_utils import token_histogram_plot, sql_category_distribution_plot, bio_category_distribution_plot, sql_category_radar_plots
 from utils.table_utils import baseline_results_table, interaction_results_table, experiment_results_table, compute_results_table, error_analysis_table, bioscore_comparison_table
+from utils.experiments_utils import substitute_env_placeholders
 
 def main():
     full_benchmark_path = 'data/benchmark_data/BiomedSQL.csv'
@@ -18,7 +22,7 @@ def main():
             "csv",
             data_files='https://huggingface.co/datasets/NIH-CARD/BiomedSQL/resolve/main/benchmark_data/BiomedSQL.csv'
         )
-        full_benchmark = full_benchmark_hf['train'].to_pandas()
+        full_benchmark = substitute_env_placeholders(full_benchmark_hf['train'].to_pandas())
         full_benchmark.to_csv(full_benchmark_path, index=None)
     
     print(full_benchmark.shape)
@@ -32,7 +36,7 @@ def main():
             "csv",
             data_files='https://huggingface.co/datasets/NIH-CARD/BiomedSQL/resolve/main/benchmark_data/dev_sample.csv'
         )
-        benchmark = benchmark_hf['train'].to_pandas()
+        benchmark = substitute_env_placeholders(benchmark_hf['train'].to_pandas())
         benchmark.to_csv(benchmark_path, index=None)
 
     token_histogram_plot(full_benchmark)
