@@ -13,6 +13,7 @@ from google.cloud import bigquery
 from google.api_core.exceptions import NotFound
 from typeguard import typechecked
 from handlers.llms.base_llm import BaseLLM
+from utils.experiments_utils import substitute_env_placeholders
 from handlers.llms import AZURE_CLIENT, GEMINI_CLIENT, ANTHROPIC_CLIENT
 from handlers.llms.azure_openai_llm import AzureOpenAILLM
 from handlers.llms.gemini_llm import GeminiLLM
@@ -147,7 +148,7 @@ class DailSQL:
                         "csv",
                         data_files="https://huggingface.co/datasets/NIH-CARD/BiomedSQL/resolve/main/benchmark_data/train.csv"
                     )
-                    hf["train"].to_pandas().to_csv(train_path, index=False)
+                    substitute_env_placeholders(hf["train"].to_pandas()).to_csv(train_path, index=False)
                 print(f"Generating example files from {train_path}...")
                 df_train = pd.read_csv(train_path).sample(n=40, random_state=42)
                 df_train["skeleton"] = df_train["benchmark_query"].apply(_to_skeleton)

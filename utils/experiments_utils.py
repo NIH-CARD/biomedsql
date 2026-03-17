@@ -1,6 +1,16 @@
+import os
 import tiktoken
 from tabulate import tabulate
 import pandas as pd
+
+
+def substitute_env_placeholders(df):
+    project_id = os.environ['PROJECT_ID']
+    dataset_name = os.environ['DATASET_NAME']
+    for col in df.select_dtypes(include='object').columns:
+        df[col] = df[col].str.replace('{project_id}', project_id, regex=False)
+        df[col] = df[col].str.replace('{dataset_name}', dataset_name, regex=False)
+    return df
 
 def format_schema(schema):
     rows = []

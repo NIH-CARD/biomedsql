@@ -21,7 +21,7 @@ from handlers.llamaindex.llamaindex_sql import LlamaIndexSQL
 from handlers.llamaindex import TABLE_SCHEMAS
 from handlers.dail_sql.dail_sql_handler import DailSQL
 
-from utils.experiments_utils import create_table_info, count_tokens_tiktoken, read_prompts, bioscore_components, generate_answer
+from utils.experiments_utils import create_table_info, count_tokens_tiktoken, read_prompts, bioscore_components, generate_answer, substitute_env_placeholders
 from utils.analysis_utils import analyze_sql_agent_results, analyze_react_results, analyze_llamaindex_results, analyze_dail_results
 
 AZURE_OPENAI_MODEL_MAPPING = {
@@ -213,7 +213,7 @@ def main():
                 "csv",
                 data_files='https://huggingface.co/datasets/NIH-CARD/BiomedSQL/resolve/main/benchmark_data/dev_sample.csv'
             )
-            benchmark = benchmark_hf['train'].to_pandas()
+            benchmark = substitute_env_placeholders(benchmark_hf['train'].to_pandas())
             benchmark.to_csv(benchmark_path, index=None)
 
         if eval_model_provider == 'azure_openai':
