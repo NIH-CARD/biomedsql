@@ -359,6 +359,59 @@ def analyze_dail_results(results, benchmark_df, model, experiment):
     return pd.DataFrame([metrics]), results_df
 
 
+# ── Template partition analysis ───────────────────────────────────────────────
+
+def analyze_by_template_partition(results, benchmark, n_groups=5, save_path=None):
+    if isinstance(results, str):
+        results = pd.read_csv(results)
+    if isinstance(benchmark, str):
+        benchmark = pd.read_csv(benchmark)
+
+    results = results.copy()
+    results['sql_ran'] = results['sql_ran'].fillna(0)
+    if 'bioscore_norm' not in results.columns:
+        results['bioscore_norm'] = np.where(results['bioscore'] != -1, results['bioscore'] / 3, results['bioscore'])
+
+    merge = benchmark[['uuid', 'template_uuid']].merge(results, how='inner', on='uuid')
+
+    templates = sorted(merge['template_uuid'].unique())
+    groups = np.array_split(templates, n_groups)
+
+    rows = []
+    for i, group in enumerate(groups):
+        g = merge[merge['template_uuid'].isin(group)]
+        n = len(g)
+
+        ex = g['ex'].mean()
+        jac = g['jaccard'].mean()
+        ser = 1 - g['sql_ran'].mean()
+        rqr = (g['bioscore_norm'] >= 2 / 3).sum() / n if n > 0 else np.nan
+        idk = (g['bioscore_norm'] == -1).sum()
+        bad = ((g['bioscore_norm'] < 2 / 3) & (g['bioscore_norm'] != -1)).sum()
+        sr = idk / (idk + bad) if (idk + bad) > 0 else np.nan
+
+        rows.append({
+            'group': i + 1,
+            'templates': ', '.join(group),
+            'n_templates': len(group),
+            'n_questions': n,
+            'EX': round(ex, 4),
+            'JAC': round(jac, 4),
+            'RQR': round(rqr, 4),
+            'SR': round(sr, 4) if not np.isnan(sr) else np.nan,
+            'SER': round(ser, 4),
+        })
+
+    summary = pd.DataFrame(rows)
+    print(summary.to_string(index=False))
+
+    if save_path:
+        summary.to_csv(save_path, index=False)
+        print(f"\nSaved to {save_path}")
+
+    return summary
+
+
 # ── SQL error analysis ────────────────────────────────────────────────────────
 
 def extract_tables(ast):
