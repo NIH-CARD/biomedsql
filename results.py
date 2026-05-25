@@ -8,6 +8,7 @@ load_dotenv('config/.env')
 from utils.plot_utils import token_histogram_plot, sql_category_distribution_plot, bio_category_distribution_plot, sql_category_radar_plots
 from utils.table_utils import baseline_results_table, interaction_results_table, experiment_results_table, compute_results_table, error_analysis_table, bioscore_comparison_table
 from utils.experiments_utils import substitute_env_placeholders
+from utils.analysis_utils import analyze_by_template_partition
 
 def main():
     full_benchmark_path = 'data/benchmark_data/BiomedSQL.csv'
@@ -58,6 +59,8 @@ def main():
     compute_results_table()
     error_analysis_table()
     bioscore_comparison_table()
+
+    analyze_by_template_partition(results_o3_mini_baseline, full_benchmark, n_groups=5, save_path='results/parition_results.csv')
 
 if __name__ == '__main__':
     main()
