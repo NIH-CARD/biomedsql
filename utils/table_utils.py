@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from scipy.stats import pearsonr
-from utils.analysis_utils import sql_error_analysis
+from utils.analysis_utils import sql_error_analysis, template_metrics
 
 
 def _metric_row(model_metrics, name):
@@ -104,6 +104,45 @@ def error_analysis_table(benchmark_path='data/benchmark_data/dev_sample.csv', ou
     df[int_cols] = df[int_cols].astype(int)
 
     df.to_csv(f'{out_dir}/error_analysis.csv', index=False)
+
+
+def template_ex_analysis_table(df_baseline: pd.DataFrame, df_bmsql: pd.DataFrame,
+                               baseline_label: str = 'GPT-o3-mini (10-shot)',
+                               bmsql_label: str = 'BMSQL-GPT-o3-mini',
+                               out_dir: str = 'results') -> pd.DataFrame:
+    """
+    Print and save per-template EX variability metrics for two result sets.
+    Mirrors the output of template_ex_analysis.py as a table function.
+    """
+    results = [
+        template_metrics(df_baseline, baseline_label),
+        template_metrics(df_bmsql, bmsql_label),
+    ]
+
+    print("Per-template EX metrics\n")
+    for r in results:
+        n = r["n_templates"]
+        print(f"=== {r['label']} ===")
+        print(f"  Mixed templates:               {r['mixed']}/{n}")
+        print(f"  Template EX range:             {r['ex_min']:.2f}–{r['ex_max']:.2f}")
+        print(f"  Template EX mean ± SD:         {r['ex_mean']:.2f} ± {r['ex_sd']:.2f}")
+        print(f"  Mean within-template EX var:   {r['mean_var']:.4f}")
+        print()
+
+    rows = []
+    for r in results:
+        n = r["n_templates"]
+        rows.append({
+            'Setting': r['label'].split(' (')[0],
+            'Mixed templates': f"{r['mixed']}/{n}",
+            'Template EX range': f"{r['ex_min']:.2f}–{r['ex_max']:.2f}",
+            'Template EX mean ± SD': f"{r['ex_mean']:.2f} ± {r['ex_sd']:.2f}",
+            'Mean within-template EX variance': f"{r['mean_var']:.4f}",
+        })
+
+    table = pd.DataFrame(rows)
+    table.to_csv(f'{out_dir}/template_ex_analysis.csv', index=False)
+    return table
 
 
 def bioscore_comparison_table(path='analyst_graded_bioscores.csv', out_dir='results'):

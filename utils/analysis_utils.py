@@ -359,6 +359,29 @@ def analyze_dail_results(results, benchmark_df, model, experiment):
     return pd.DataFrame([metrics]), results_df
 
 
+# ── Per-template EX analysis ─────────────────────────────────────────────────
+
+def template_metrics(df: pd.DataFrame, label: str) -> dict:
+    """Compute per-template EX variability metrics from a results DataFrame."""
+    df = df.copy()
+    df["template"] = df["uuid"].str.extract(r"^(Q\d+)\.")
+
+    tmpl = df.groupby("template")["ex"].agg(["mean", "var"])
+    tmpl.columns = ["ex_mean", "ex_var"]
+    n = len(tmpl)
+
+    return {
+        "label": label,
+        "n_templates": n,
+        "mixed": int((tmpl["ex_var"] > 0).sum()),
+        "ex_min": tmpl["ex_mean"].min(),
+        "ex_max": tmpl["ex_mean"].max(),
+        "ex_mean": tmpl["ex_mean"].mean(),
+        "ex_sd": tmpl["ex_mean"].std(),
+        "mean_var": tmpl["ex_var"].mean(),
+    }
+
+
 # ── Template partition analysis ───────────────────────────────────────────────
 
 def analyze_by_template_partition(results, benchmark, n_groups=5, save_path=None):
