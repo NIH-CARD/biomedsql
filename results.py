@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv('config/.env')
 
 from utils.plot_utils import token_histogram_plot, sql_category_distribution_plot, bio_category_distribution_plot, sql_category_radar_plots
-from utils.table_utils import baseline_results_table, interaction_results_table, experiment_results_table, compute_results_table, error_analysis_table, bioscore_comparison_table
+from utils.table_utils import baseline_results_table, interaction_results_table, experiment_results_table, compute_results_table, error_analysis_table, bioscore_comparison_table, template_ex_analysis_table
 from utils.experiments_utils import substitute_env_placeholders
 from utils.analysis_utils import analyze_by_template_partition
 
@@ -48,6 +48,7 @@ def main():
     results_o3_mini_combo = pd.read_csv('results/experiment_results/gpt-o3-mini-combo-results.csv')
     results_react_o3_mini = pd.read_csv('results/experiment_results/react-gpt-o3-mini-baseline-results.csv')
     results_o3_mini_baseline = pd.read_csv('results/experiment_results/gpt-o3-mini-baseline-results.csv')
+    results_o3_mini_10shot = pd.read_csv('results/experiment_results/gpt-o3-mini-10-shot-results.csv')
 
     sql_category_radar_plots(
         benchmark, results_bmsql_o3_mini, results_o3_mini_combo, results_react_o3_mini, results_o3_mini_baseline
@@ -61,6 +62,7 @@ def main():
     bioscore_comparison_table()
 
     analyze_by_template_partition(results_o3_mini_baseline, full_benchmark, n_groups=5, save_path='results/parition_results.csv')
+    template_ex_analysis_table(results_o3_mini_10shot, results_bmsql_o3_mini)
 
 if __name__ == '__main__':
     main()
