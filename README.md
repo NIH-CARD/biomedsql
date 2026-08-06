@@ -84,13 +84,14 @@ Tables will show up in ```results/``` and plots will show up in ```results/plots
 
 ## Results
 
-On BiomedSQL, GPT-o3-mini is consistently the top-performing model on the variety of experiments performed. However, even when paired with our custom-built text-to-SQL system (BMSQL), it still falls short of domain-expert level performance.
+On BiomedSQL, Gemini-3-Pro is the top-performing base model. However, our custom-built text-to-SQL system (BMSQL) sees better performance when paired with GPT-o3-mini. Both fall short of expert baselines.
 
-| Model name             | Execution Accuracy    | Response Quality Rate |
+| Model Name             | Execution Accuracy    | Response Quality Rate |
 | ---------------------- | --------------------- | --------------------- |
-| GPT-o3-mini-baseline   |        53.5%          |          73.3%        |
-| GPT-o3-mini-combo      |        59.0%          |          77.8%        |
-| BMSQL-GPT-o3-mini      |        62.6%          |          84.6%        |
+| Expert Baseline        |        90.0%          |          95.0%        |
+| ---------------------- | --------------------- | --------------------- |
+| Gemini-3-Pro           |        58.1%          |          81.8%        |
+| BMSQL-GPT-o3-mini      |        62.6%          |          83.2%        |
 
 
 ## License and Contributing
@@ -103,8 +104,8 @@ To contribute, simply clone the repository and open a pull request. For any bugs
 ```
 @article{koretsky2025biomedsql,
       title  = {BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases}, 
-      author = {Mathew J. Koretsky and Maya Willey and Adi Asija and Owen Bianchi and Chelsea X. Alvarado and Tanay Nayak and Nicole Kuznetsov and Sungwon Kim and Mike A. Nalls and Daniel Khashabi and Faraz Faghri},
-      year   = {2025},
+      author = {Mathew J. Koretsky and Maya Willey and Owen Bianchi and Chelsea X. Alvarado and Tanay Nayak and Nicole Kuznetsov and Sungwon Kim and Mike A. Nalls and Daniel Khashabi and Faraz Faghri},
+      year   = {2026},
       eprint = {2505.20321},
       archivePrefix = {arXiv},
       primaryClass  = {cs.CL},
