@@ -1,5 +1,7 @@
 # BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases
 
+Accepted as a conference paper at COLM 2026!
+
 Preprint: https://arxiv.org/abs/2505.20321
 
 ![Alt text](assets/text-to-sql-workflow.png)
