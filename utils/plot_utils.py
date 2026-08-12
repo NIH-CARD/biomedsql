@@ -125,7 +125,7 @@ def bio_category_distribution_plot(benchmark):
     fig.gca().add_artist(centre_circle)
 
     # Add title in the center
-    plt.title("Biological Reasoning Category Distribution", fontsize=14)
+    plt.title("Biomedical Reasoning Category Distribution", fontsize=14)
     plt.savefig('results/plots/bio_cat_dist.png')
 
 def sql_category_radar_plots(benchmark, bmsql, combo, react, baseline):
