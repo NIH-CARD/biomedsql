@@ -1,8 +1,16 @@
-# BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases
+<h1 align="center">BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases</h1>
+
+<p align="center">
+  <a href="https://arxiv.org/abs/2505.20321"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-2505.20321-b31b1b"></a>
+  <a href="https://datatecnica.github.io/biomedbench-suite/biomedsql"><img alt="Website" src="https://img.shields.io/badge/website-biomedsql-blue"></a>
+  <a href="https://huggingface.co/datasets/NIH-CARD/BiomedSQL"><img alt="HuggingFace Dataset" src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-BiomedSQL-yellow"></a>
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue"></a>
+  <a href="https://polyformproject.org/licenses/noncommercial/1.0.0"><img alt="License" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey"></a>
+</p>
 
 Accepted as a conference paper at COLM 2026!
 
-Preprint: https://arxiv.org/abs/2505.20321
+See the full paper on [arXiv](https://arxiv.org/abs/2505.20321) or visit the [project website](https://datatecnica.github.io/biomedbench-suite/biomedsql).
 
 ![Alt text](assets/text-to-sql-workflow.png)
 
@@ -24,7 +32,13 @@ uv sync
 
 ## Environment Setup
 
-BiomedSQL requires the extensive use of both opened a closed source LLMs. The following services are needed to run the full set of experiments:
+BiomedSQL requires the extensive use of GCP BigQuery, as well as open- and closed-source LLMs. The following services are needed to run the full set of experiments:
+
+### Google Cloud Platform
+
+* A GCP project with BigQuery enabled and a service account granted `BigQuery Data Editor`, `BigQuery Job User`, and `Storage Admin` (the setup script creates a GCS bucket and BigQuery dataset from scratch, then loads and queries data)
+
+### LLM Providers
 
 * AzureOpenAI (with endpoints for GPT-4o, GPT-o3-mini, and GPT-5.2)
 * AzureAI (with an endpoint for Meta-Llama-405B-Instruct)
@@ -61,8 +75,6 @@ Currently we use the following open-source models and detail the following compu
 * meta-llama/Llama-3.1-70B-Instruct (three NVIDIA 80GB A100 GPUs)
 * Qwen/Qwen2.5-Coder-32B-Instruct (two NVIDIA 80GB A100 GPUs)
 * Qwen/Qwen2.5-Coder-14B-Instruct (two NVIDIA 80GB A100 GPUs)
-
-We understand that GPU access may differ from user to user, so in order to run our experiments without the need for GPUs, please comment out any models specified with ```provider: huggingface``` under the ```experiment_models``` section of ```config/llm_config.yaml```.
 
 ## Interaction Paradigm Experiments
 
