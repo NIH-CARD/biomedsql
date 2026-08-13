@@ -4,7 +4,7 @@
 [![Website](https://img.shields.io/badge/website-biomedsql-blue)](https://datatecnica.github.io/biomedbench-suite/biomedsql)
 [![HuggingFace Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-BiomedSQL-yellow)](https://huggingface.co/datasets/NIH-CARD/BiomedSQL)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)](https://polyformproject.org/licenses/noncommercial/1.0.0)
 
 Accepted as a conference paper at COLM 2026!
 
