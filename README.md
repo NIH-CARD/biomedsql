@@ -76,8 +76,6 @@ Currently we use the following open-source models and detail the following compu
 * Qwen/Qwen2.5-Coder-32B-Instruct (two NVIDIA 80GB A100 GPUs)
 * Qwen/Qwen2.5-Coder-14B-Instruct (two NVIDIA 80GB A100 GPUs)
 
-We understand that GPU access may differ from user to user, so in order to run our experiments without the need for GPUs, please comment out any models specified with ```provider: huggingface``` under the ```experiment_models``` section of ```config/llm_config.yaml```.
-
 ## Interaction Paradigm Experiments
 
 To run the interaction paradigm experiments for BiomedSQL, run:
