@@ -8,7 +8,7 @@
 
 Accepted as a conference paper at COLM 2026!
 
-See the full paper on [arXiv](https://arxiv.org/abs/2505.20321).
+See the full paper on [arXiv](https://arxiv.org/abs/2505.20321) or visit the [project website](https://datatecnica.github.io/biomedbench-suite/biomedsql).
 
 ![Alt text](assets/text-to-sql-workflow.png)
 
