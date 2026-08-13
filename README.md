@@ -1,10 +1,12 @@
-# BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases
+<h1 align="center">BiomedSQL: Text-to-SQL for Scientific Reasoning on Biomedical Knowledge Bases</h1>
 
-[![arXiv](https://img.shields.io/badge/arXiv-2505.20321-b31b1b)](https://arxiv.org/abs/2505.20321)
-[![Website](https://img.shields.io/badge/website-biomedsql-blue)](https://datatecnica.github.io/biomedbench-suite/biomedsql)
-[![HuggingFace Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-BiomedSQL-yellow)](https://huggingface.co/datasets/NIH-CARD/BiomedSQL)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)](https://polyformproject.org/licenses/noncommercial/1.0.0)
+<p align="center">
+  <a href="https://arxiv.org/abs/2505.20321"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-2505.20321-b31b1b"></a>
+  <a href="https://datatecnica.github.io/biomedbench-suite/biomedsql"><img alt="Website" src="https://img.shields.io/badge/website-biomedsql-blue"></a>
+  <a href="https://huggingface.co/datasets/NIH-CARD/BiomedSQL"><img alt="HuggingFace Dataset" src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-BiomedSQL-yellow"></a>
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue"></a>
+  <a href="https://polyformproject.org/licenses/noncommercial/1.0.0"><img alt="License" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey"></a>
+</p>
 
 Accepted as a conference paper at COLM 2026!
 
