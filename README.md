@@ -32,7 +32,12 @@ uv sync
 
 BiomedSQL requires the extensive use of GCP BigQuery, as well as open- and closed-source LLMs. The following services are needed to run the full set of experiments:
 
-* Google Cloud Platform (a project with BigQuery enabled and a service account with permissions to create and query datasets)
+### Google Cloud Platform
+
+* A GCP project with BigQuery enabled and a service account granted `BigQuery Data Editor`, `BigQuery Job User`, and `Storage Admin` (the setup script creates a GCS bucket and BigQuery dataset from scratch, then loads and queries data)
+
+### LLM Providers
+
 * AzureOpenAI (with endpoints for GPT-4o, GPT-o3-mini, and GPT-5.2)
 * AzureAI (with an endpoint for Meta-Llama-405B-Instruct)
 * Gemini (for access to Gemini-2.0-Flash and Gemini-3-Pro)
